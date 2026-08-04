@@ -1,25 +1,18 @@
 # Retail IQ
 
-> **Project status: In development**
+Retail IQ is a production-quality retail business intelligence platform being
+built as a final-year B.Tech Data Science & Analytics project.
 
-Retail IQ is currently being designed and built. This repository will contain
-the complete project, including its source code, documentation, and setup
-instructions, as development progresses.
+> **Project status:** Phase 1 — Project Setup
 
-## Current Status
+This is an intentionally limited project placeholder. The complete README,
+including verified installation, usage, features, screenshots, and model
+documentation, is a Phase 9 deliverable defined by
+[`docs/SRS.md`](docs/SRS.md), Section 20.
 
-The project is not yet ready for production use. Features, architecture, and
-technical documentation will be added and refined during development.
+The governing project documents are:
 
-## Planned Work
+1. [`docs/SRS-Clarifications-Addendum.md`](docs/SRS-Clarifications-Addendum.md)
+2. [`docs/SRS.md`](docs/SRS.md)
 
-- Define the project requirements and core retail workflows
-- Design and implement the application
-- Add testing and quality checks
-- Document installation, configuration, and usage
-- Prepare the first stable release
-
-## Updates
-
-All ongoing development for Retail IQ will be committed to this repository.
-Check the commit history for the latest progress.
+The clarification addendum takes precedence wherever the documents conflict.

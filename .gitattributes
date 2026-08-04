@@ -1,0 +1,12 @@
+* text=auto
+Makefile text eol=lf
+Dockerfile text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Preserve the governing documents byte-for-byte as supplied.
+docs/SRS.md -text whitespace=cr-at-eol
+docs/SRS-Clarifications-Addendum.md -text whitespace=cr-at-eol
