@@ -12,7 +12,9 @@ documentation, is a Phase 9 deliverable defined by
 
 The governing project documents are:
 
-1. [`docs/SRS-Clarifications-Addendum.md`](docs/SRS-Clarifications-Addendum.md)
-2. [`docs/SRS.md`](docs/SRS.md)
+1. [`docs/SRS-Clarifications-Addendum-v1.2.md`](docs/SRS-Clarifications-Addendum-v1.2.md)
+2. [`docs/SRS-Clarifications-Addendum.md`](docs/SRS-Clarifications-Addendum.md)
+3. [`docs/SRS.md`](docs/SRS.md)
 
-The clarification addendum takes precedence wherever the documents conflict.
+The newest clarification addendum takes precedence wherever the documents
+conflict.

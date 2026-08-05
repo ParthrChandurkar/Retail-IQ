@@ -22,7 +22,12 @@ services:
       context: ./backend
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-retail_bi}
+      DATA_RAW_DIR: /app/data/raw
+      REPORT_DIR: /app/analytics/reports
       ENV: development
+    volumes:
+      - ./data:/app/data
+      - ./analytics:/app/analytics
     ports:
       - "8000:8000"
     depends_on:

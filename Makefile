@@ -7,10 +7,16 @@ down:
 	docker compose down
 
 download-data:
-	@echo "not yet implemented — Phase 2"
+	docker compose run --rm --no-deps \
+		-e KAGGLE_USERNAME="$(KAGGLE_USERNAME)" \
+		-e KAGGLE_KEY="$(KAGGLE_KEY)" \
+		backend python -m app.etl.download_data
 
 etl:
-	@echo "not yet implemented — Phase 2"
+	docker compose run --rm backend alembic upgrade head
+	docker compose run --rm \
+		-e GIT_COMMIT="$(shell git rev-parse HEAD)" \
+		backend python -m app.etl.run_all
 
 analytics-reports:
 	@echo "not yet implemented — Phase 3"
