@@ -19,7 +19,11 @@ etl:
 		backend python -m app.etl.run_all
 
 analytics-reports:
-	@echo "not yet implemented — Phase 3"
+	docker compose run --rm backend alembic upgrade head
+	docker compose run --rm backend python -m app.etl.build_marts
+	docker compose run --rm \
+		-e GIT_COMMIT="$(shell git rev-parse HEAD)" \
+		backend python -m app.analytics.generate_reports
 
 train:
 	@echo "not yet implemented — Phase 6"

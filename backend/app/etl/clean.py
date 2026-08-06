@@ -214,13 +214,21 @@ async def _load_order_items(connection: asyncpg.Connection) -> None:
               AND source.freight_value >= 0
             ORDER BY source.order_id, source.order_item_id
         ),
-        bounds AS (
+        category_bounds AS (
             SELECT
+                COALESCE(
+                    products.category_name_english,
+                    products.category_name,
+                    'unknown'
+                ) AS category,
                 percentile_cont(0.25) WITHIN GROUP (ORDER BY price) AS price_q1,
                 percentile_cont(0.75) WITHIN GROUP (ORDER BY price) AS price_q3,
                 percentile_cont(0.25) WITHIN GROUP (ORDER BY freight_value) AS freight_q1,
                 percentile_cont(0.75) WITHIN GROUP (ORDER BY freight_value) AS freight_q3
             FROM valid_items
+            JOIN curated.products AS products
+              ON products.product_id = valid_items.product_id
+            GROUP BY 1
         )
         INSERT INTO curated.order_items (
             order_id, order_item_id, product_id, seller_id, shipping_limit_date,
@@ -239,7 +247,13 @@ async def _load_order_items(connection: asyncpg.Connection) -> None:
             source.freight_value < bounds.freight_q1 - 1.5 * (bounds.freight_q3 - bounds.freight_q1)
               OR source.freight_value > bounds.freight_q3 + 1.5 * (bounds.freight_q3 - bounds.freight_q1)
         FROM valid_items AS source
-        CROSS JOIN bounds
+        JOIN curated.products AS products ON products.product_id = source.product_id
+        JOIN category_bounds AS bounds
+          ON bounds.category = COALESCE(
+              products.category_name_english,
+              products.category_name,
+              'unknown'
+          )
         """
     )
 

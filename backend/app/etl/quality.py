@@ -545,7 +545,10 @@ async def generate_post_clean_report() -> Path:
             "",
             "## Retained outlier flags",
             "",
-            "All flagged rows remain in curated tables.",
+            "All flagged rows remain in curated tables. Price/freight Q1–Q3 columns "
+            "show the Phase 2 global baseline; their persisted counts use the "
+            "category-conditional bounds authorized by the material Phase 3 EDA "
+            "follow-up. Delivery and payment remain global.",
             "",
             "| Field | Q1 | Q3 | IQR | Lower | Upper | Flagged | Flagged % | Persisted flag count |",
             "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
