@@ -1,7 +1,7 @@
 # Data Quality Report — Post-Clean
 
-- **Generated at:** `2026-08-05T17:11:29.313781+00:00`
-- **Code/commit reference:** `73a565f8882a8e80f7a57a26bea52fdcab1ff476`
+- **Generated at:** `2026-08-06T04:42:43.136585+00:00`
+- **Code/commit reference:** `aa84a065ffa36b58a3f8f8b2b8523d7dad07a45c`
 - **Dataset row counts used:** customers=99,441, orders=99,441, order_items=112,650, products=32,951, sellers=3,095, order_payments=103,886, order_reviews=99,224, geolocation=1,000,163, product_category_translation=71
 
 ## Curated row counts
@@ -19,7 +19,7 @@
 | `curated.users` | 0 |
 | `curated.refresh_tokens` | 0 |
 | `curated.admin_settings` | 0 |
-| `curated.data_refresh_log` | 4 |
+| `curated.data_refresh_log` | 9 |
 
 ## Cleaning diff
 
@@ -78,11 +78,11 @@ Invalid rows are excluded only when they violate the binding curated contract. O
 
 ## Retained outlier flags
 
-All flagged rows remain in curated tables.
+All flagged rows remain in curated tables. Price/freight Q1–Q3 columns show the Phase 2 global baseline; their persisted counts use the category-conditional bounds authorized by the material Phase 3 EDA follow-up. Delivery and payment remain global.
 
 | Field | Q1 | Q3 | IQR | Lower | Upper | Flagged | Flagged % | Persisted flag count |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `price` | 39.9000 | 134.9000 | 95.0000 | -102.6000 | 277.4000 | 8,427 | 7.4807% | 8,427 |
-| `freight_value` | 13.0800 | 21.1500 | 8.0700 | 0.9750 | 33.2550 | 12,134 | 10.7714% | 12,134 |
+| `price` | 39.9000 | 134.9000 | 95.0000 | -102.6000 | 277.4000 | 8,427 | 7.4807% | 9,376 |
+| `freight_value` | 13.0800 | 21.1500 | 8.0700 | 0.9750 | 33.2550 | 12,134 | 10.7714% | 9,767 |
 | `payment_value` | 56.7900 | 171.8375 | 115.0475 | -115.7813 | 344.4088 | 7,981 | 7.6825% | 7,981 |
 | `delivery_days` | 6.0000 | 15.0000 | 9.0000 | -7.5000 | 28.5000 | 5,025 | 5.2085% | 5,025 |

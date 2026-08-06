@@ -1,7 +1,7 @@
 # Data Quality Report — Pre-Clean
 
-- **Generated at:** `2026-08-05T17:10:21.478435+00:00`
-- **Code/commit reference:** `73a565f8882a8e80f7a57a26bea52fdcab1ff476`
+- **Generated at:** `2026-08-06T04:42:34.316713+00:00`
+- **Code/commit reference:** `aa84a065ffa36b58a3f8f8b2b8523d7dad07a45c`
 - **Dataset row counts used:** customers=99,441, orders=99,441, order_items=112,650, products=32,951, sellers=3,095, order_payments=103,886, order_reviews=99,224, geolocation=1,000,163, product_category_translation=71
 
 ## Source row counts
