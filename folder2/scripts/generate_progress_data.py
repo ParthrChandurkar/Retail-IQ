@@ -8,7 +8,6 @@ missing so a stale faculty dashboard cannot silently be published.
 from __future__ import annotations
 
 import csv
-import json
 import re
 from pathlib import Path
 
@@ -16,7 +15,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REPORTS = ROOT / "analytics" / "reports"
 OUTPUT = ROOT / "folder2" / "data"
-PREVIEW_DATA = ROOT / "folder2" / "preview" / "data.js"
 
 
 def read_report(name: str) -> str:
@@ -205,8 +203,6 @@ def main() -> None:
     for name, rows in datasets.items():
         write_csv(f"{name}.csv", rows)
 
-    payload = json.dumps(datasets, ensure_ascii=False, separators=(",", ":"))
-    PREVIEW_DATA.write_text(f"window.RETAIL_IQ_DATA={payload};\n", encoding="utf-8")
     print(f"Generated {len(datasets)} evidence-backed extracts in {OUTPUT}")
 
 

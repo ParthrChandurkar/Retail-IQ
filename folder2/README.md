@@ -2,10 +2,6 @@
 
 This separate faculty-demo folder presents the real work completed through Phase 3. It does not modify the governed frontend or claim that later phases are complete.
 
-## View immediately
-
-Open `preview/index.html` in a browser. It works without Docker, a database, or a Microsoft account.
-
 ## Build in Power BI Desktop
 
 1. Run `python scripts/generate_progress_data.py` from this folder whenever the analytics reports change.
@@ -21,6 +17,6 @@ Open `preview/index.html` in a browser. It works without Docker, a database, or 
 - Dataset numbers are parsed from `analytics/reports/`, not fabricated.
 - Delivered revenue and AOV use the project metric contract: delivered orders only, item price plus freight, purchase timestamp as the date axis.
 - Cleaning and preprocessing are visible: layer row counts, reconciliation, duplicate handling, and retained outlier flags.
-- The preview reports Phases 1–3 complete and Phase 4 onward pending because no checked-in target-selection report currently exists.
+- The progress extract reports Phases 1–3 complete and Phase 4 onward pending because no checked-in target-selection report currently exists.
 
-Power BI Desktop is not installed on this machine, so a genuine `.pbix` binary cannot be produced or visually verified here. The browser preview and reproducible Power BI assets provide the dashboard now without pretending that a renamed or fabricated file is a valid PBIX.
+Power BI Desktop is not installed on this machine, so a genuine `.pbix` binary cannot be produced or visually verified here. The reproducible Power BI assets are provided without pretending that a renamed or fabricated file is a valid PBIX.
