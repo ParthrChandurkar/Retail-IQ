@@ -1,0 +1,7 @@
+﻿metric,value,unit,definition
+Delivered revenue,15419773.75,BRL,Item price plus freight for delivered orders
+Delivered orders,96478,orders,Distinct delivered orders
+Customers,93358,customers,Distinct customers with a delivered order
+Average order value,159.83,BRL,Delivered revenue divided by delivered orders
+Repeat-customer rate,3.0003,percent,Customers with more than one delivered order
+Average review score,4.0888,score,Review-grain deterministic deduplication

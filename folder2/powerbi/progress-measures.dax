@@ -1,0 +1,10 @@
+// Progress-demo measures. Final Phase 9 measures remain governed by Addendum v1.3.
+Delivered Revenue = SUM(monthly_revenue[revenue_brl])
+Delivered Orders = SUM(monthly_revenue[delivered_orders])
+Average Order Value = DIVIDE([Delivered Revenue], [Delivered Orders])
+Customers = MAXX(FILTER(kpi_summary, kpi_summary[metric] = "Customers"), kpi_summary[value])
+Repeat Customer Rate = DIVIDE(MAXX(FILTER(kpi_summary, kpi_summary[metric] = "Repeat-customer rate"), kpi_summary[value]), 100)
+Completed Phases = COUNTROWS(FILTER(project_progress, project_progress[status] = "Complete"))
+Total Phases = COUNTROWS(project_progress)
+Progress Percentage = DIVIDE([Completed Phases], [Total Phases])
+Flagged Outliers Retained = SUM(outlier_summary[persisted_flagged])

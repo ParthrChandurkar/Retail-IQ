@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Retail IQ — Faculty Progress Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand"><span>RI</span><strong>Retail IQ</strong></div>
+      <nav>
+        <button class="active" data-page="overview">Overview</button>
+        <button data-page="quality">Data quality</button>
+        <button data-page="customers">Customers</button>
+        <button data-page="statistics">Statistics</button>
+      </nav>
+      <div class="side-note"><b>Progress build</b><br />Real Phase 2–3 outputs<br /><small>Generated from checked-in reports</small></div>
+    </aside>
+    <main>
+      <header><div><p class="eyebrow">FACULTY REVIEW · PROGRESS DASHBOARD</p><h1 id="page-title">Executive overview</h1></div><div class="status"><i></i> Evidence current to Phase 3</div></header>
+
+      <section class="page active" id="overview">
+        <div class="kpi-grid" id="kpis"></div>
+        <div class="grid two">
+          <article class="card wide"><div class="card-head"><div><p class="label">DELIVERED REVENUE</p><h2>Monthly performance</h2></div><span>BRL · purchase month</span></div><div id="revenue-chart" class="chart"></div></article>
+          <article class="card"><div class="card-head"><div><p class="label">IMPLEMENTATION</p><h2>Phase progress</h2></div><b>3 / 9</b></div><div id="phase-list"></div></article>
+        </div>
+      </section>
+
+      <section class="page" id="quality">
+        <div class="section-intro"><div><p class="label">PIPELINE TRANSPARENCY</p><h2>Raw → curated → analytics marts</h2></div><p>Dirty-source validation, deterministic cleaning, preserved outliers, and traceable row counts.</p></div>
+        <div class="pipeline"><div><b>9 CSV files</b><span>Raw landing tables</span></div><em>→</em><div><b>Validated</b><span>Curated entities</span></div><em>→</em><div><b>10 marts</b><span>Business-ready layer</span></div></div>
+        <div class="grid two"><article class="card"><div class="card-head"><div><p class="label">CURATED LAYER</p><h2>Table row counts</h2></div></div><div id="row-counts" class="bars"></div></article><article class="card"><div class="card-head"><div><p class="label">OUTLIER POLICY</p><h2>Flagged, never fabricated</h2></div></div><div id="outliers"></div></article></div>
+        <article class="card table-card"><div class="card-head"><div><p class="label">CLEANING LINEAGE</p><h2>Source-to-curated reconciliation</h2></div></div><div class="table-wrap"><table><thead><tr><th>Transformation</th><th>Raw rows</th><th>Curated rows</th><th>Removed</th><th>Rationale</th></tr></thead><tbody id="cleaning-table"></tbody></table></div></article>
+      </section>
+
+      <section class="page" id="customers">
+        <div class="section-intro"><div><p class="label">CUSTOMER INTELLIGENCE</p><h2>RFM segments and historical CLV</h2></div><p>Per-customer profiles use delivered orders only and retain a single source of truth.</p></div>
+        <div class="grid two"><article class="card"><div class="card-head"><div><p class="label">SEGMENT SIZE</p><h2>Customer distribution</h2></div></div><div id="segments" class="bars segment-bars"></div></article><article class="card"><div class="card-head"><div><p class="label">BUSINESS SIGNAL</p><h2>Retention opportunity</h2></div></div><div class="insight-number" id="repeat-rate"></div><p class="muted" id="retention-copy"></p><div class="callout" id="clv-callout"></div></article></div>
+      </section>
+
+      <section class="page" id="statistics">
+        <div class="section-intro"><div><p class="label">STATISTICAL EVIDENCE</p><h2>Hypothesis tests at α = 0.05</h2></div><p>Each result includes the computed statistic, p-value, and a plain-language decision.</p></div>
+        <div id="tests" class="test-grid"></div>
+        <article class="card conclusion"><p class="label">KEY OPERATIONAL FINDING</p><h2>Late delivery has a visible customer-experience cost.</h2><p id="delivery-conclusion"></p></article>
+      </section>
+    </main>
+    <script src="data.js"></script><script src="app.js"></script>
+  </body>
+</html>

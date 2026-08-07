@@ -1,0 +1,9 @@
+﻿source_to_curated,raw_rows,curated_rows,rows_removed,rationale
+raw.customers` → `curated.customers,99441,99441,0,required-key validation and grain deduplication
+raw.orders` → `curated.orders,99441,99441,0,"required fields, valid customer FK, timestamp ordering"
+raw.order_items` → `curated.order_items,112650,112650,0,"required fields, non-negative values, valid FKs"
+raw.products` → `curated.products,32951,32951,0,required product_id and grain deduplication
+raw.sellers` → `curated.sellers,3095,3095,0,required seller_id and grain deduplication
+raw.order_payments` → `curated.payment_details,103886,103886,0,"required fields, non-negative values, valid order FK"
+raw.order_reviews` → `curated.reviews,99224,99224,0,"composite grain, score range, valid order FK"
+payment detail → `curated.payment_summary,103886,99440,4446,aggregated to one row per order

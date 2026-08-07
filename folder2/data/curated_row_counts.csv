@@ -1,0 +1,13 @@
+﻿layer,table,rows
+curated,curated.customers,99441
+curated,curated.orders,99441
+curated,curated.order_items,112650
+curated,curated.products,32951
+curated,curated.sellers,3095
+curated,curated.payment_details,103886
+curated,curated.payment_summary,99440
+curated,curated.reviews,99224
+curated,curated.users,0
+curated,curated.refresh_tokens,0
+curated,curated.admin_settings,0
+curated,curated.data_refresh_log,9

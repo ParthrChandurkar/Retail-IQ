@@ -1,0 +1,7 @@
+{
+  "name": "Retail IQ Progress",
+  "dataColors": ["#246BFD", "#53C8FF", "#12A873", "#F2A93B", "#E45B68", "#7B61FF"],
+  "background": "#F5F7FB",
+  "foreground": "#0D1730",
+  "tableAccent": "#246BFD"
+}
