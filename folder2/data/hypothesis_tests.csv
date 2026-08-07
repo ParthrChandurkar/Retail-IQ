@@ -1,4 +1,0 @@
-﻿test,comparison,statistic,p_value,significant,conclusion
-Chi-Square,Payment type × customer segment,393.8336,1.3656e-74,Yes,The association between primary payment method and customer segment is statistically significant at α=0.05.
-One-way ANOVA,Delivery days across states,781.8406,0.0,Yes,Differences in mean delivery time across states are statistically significant at α=0.05.
-Welch T-Test,Review score: on-time vs late,89.5507,0.0,Yes,Late deliveries have a lower mean review score than on-time deliveries; the difference is statistically significant at α=0.05.
