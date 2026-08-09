@@ -15,6 +15,21 @@ class Settings(BaseSettings):
         validation_alias="DATABASE_URL",
     )
     environment: str = Field(default="development", validation_alias="ENV")
+    jwt_secret: str = Field(default="change-me", validation_alias="JWT_SECRET")
+    jwt_access_expire_minutes: int = Field(
+        default=30, validation_alias="JWT_ACCESS_EXPIRE_MINUTES"
+    )
+    jwt_refresh_expire_days: int = Field(
+        default=14, validation_alias="JWT_REFRESH_EXPIRE_DAYS"
+    )
+    admin_email: str | None = Field(default=None, validation_alias="ADMIN_EMAIL")
+    admin_password: str | None = Field(default=None, validation_alias="ADMIN_PASSWORD")
+    cors_origins: str = Field(
+        default="http://localhost:3000", validation_alias="CORS_ORIGINS"
+    )
+    powerbi_reader_password: str | None = Field(
+        default=None, validation_alias="POWERBI_READER_PASSWORD"
+    )
     data_raw_dir: Path = Field(
         default=Path("../data/raw"), validation_alias="DATA_RAW_DIR"
     )
@@ -23,6 +38,13 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Return configured browser origins without empty entries."""
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
 
 @lru_cache

@@ -25,6 +25,13 @@ services:
       DATA_RAW_DIR: /app/data/raw
       REPORT_DIR: /app/analytics/reports
       ENV: development
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      JWT_ACCESS_EXPIRE_MINUTES: ${JWT_ACCESS_EXPIRE_MINUTES:-30}
+      JWT_REFRESH_EXPIRE_DAYS: ${JWT_REFRESH_EXPIRE_DAYS:-14}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      POWERBI_READER_PASSWORD: ${POWERBI_READER_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     volumes:
       - ./data:/app/data
       - ./analytics:/app/analytics
