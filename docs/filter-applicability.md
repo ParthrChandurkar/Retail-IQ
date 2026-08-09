@@ -5,13 +5,13 @@ This table is the binding Phase 3 compatibility contract for the shared filters 
 | Mart / future endpoint consumer | Date | State | City | Category | Seller | Payment type | Customer segment | Review score |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | `kpi_snapshot` + `revenue_daily` / `GET /dashboard/summary` | Yes¹ | No | No | No | No | No | No | No |
-| `revenue_daily` / `GET /dashboard/revenue-trend` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No |
-| `revenue_by_category` / `GET /dashboard/top-categories`, `GET /products/categories`, `GET /products/performance` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No |
-| `revenue_by_region` / `GET /regions/sales`, `GET /regions/geo` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| `revenue_daily` / `GET /dashboard/revenue-trend` | Yes | No | No | No | No | No | No | No |
+| `revenue_by_category` / `GET /dashboard/top-categories`, `GET /products/categories`, `GET /products/performance` | Yes | No | No | Yes | No | No | No | No |
+| `revenue_by_region` / `GET /regions/sales`, `GET /regions/geo` | Yes | Yes | Yes | No | No | No | No | No |
 | `customer_profile` / `GET /customers/rfm`, `GET /customers/{id}`, `GET /customers/clv-distribution`, `GET /customers/repeat-purchase-rate` | No | Yes | Yes | No | No | No | Yes | No |
 | `customer_segments` / `GET /customers/segments` | No | No | No | No | No | No | Yes | No |
-| `seller_performance` / `GET /dashboard/top-sellers`, `GET /sellers/performance`, `GET /sellers/{id}` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No |
-| `payment_method_mix` / `GET /payments/method-mix`, `GET /payments/installments-distribution` | Yes | Yes | Yes | No | No | Yes | Yes | No |
+| `seller_performance` / `GET /dashboard/top-sellers`, `GET /sellers/performance`, `GET /sellers/{id}` | Yes | No | No | No | Yes | No | No | No |
+| `payment_method_mix` / `GET /payments/method-mix`, `GET /payments/installments-distribution` | Yes | No | No | No | No | Yes | No | No |
 | `delivery_performance` / `GET /regions/delivery-performance` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | `review_summary` / `GET /reviews/score-distribution`, `GET /reviews/trends` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 
@@ -25,3 +25,4 @@ This table is the binding Phase 3 compatibility contract for the shared filters 
 - `marts.customer_segments` is strictly segment grain and is derived with `GROUP BY rfm_segment` over `customer_profile`.
 - `review_summary` uses one deterministic row per `review_id`; delivery and review-outcome comparisons remain at order grain.
 - A filter marked `No` must be rejected by the future Phase 5 API with `400` and `code: "unsupported_filter"`; Phase 3 does not add routers.
+- The five corrected rollups use endpoint-specific grains: `date`; `date, category`; `date, state, city`; `date, seller_id`; and `date, payment_type`. Their former generic combined-filter columns were removed because those columns made the tables near-fact-grain and conflicted with the SRS §16 pre-aggregation intent.

@@ -57,7 +57,7 @@ class CustomerSegment(Base):
 
 
 class AggregateDimensions:
-    """Shared pre-joined dimensions used by filterable aggregate marts."""
+    """Shared dimensions for the remaining Phase 3 multidimensional marts."""
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -69,39 +69,42 @@ class AggregateDimensions:
     customer_segment: Mapped[str | None] = mapped_column(String)
 
 
-class RevenueDaily(AggregateDimensions, Base):
+class RevenueDaily(Base):
     __tablename__ = "revenue_daily"
-    __table_args__ = (
-        Index("ix_revenue_daily_filters", "date", "state", "category"),
-        {"schema": "marts"},
-    )
+    __table_args__ = {"schema": "marts"}
 
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
     item_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
-class RevenueByCategory(AggregateDimensions, Base):
+class RevenueByCategory(Base):
     __tablename__ = "revenue_by_category"
     __table_args__ = (
-        Index("ix_revenue_category_filters", "category", "date"),
+        Index("ix_revenue_category_date", "category", "date"),
         {"schema": "marts"},
     )
 
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    category: Mapped[str] = mapped_column(String, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
     units: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
-class RevenueByRegion(AggregateDimensions, Base):
+class RevenueByRegion(Base):
     __tablename__ = "revenue_by_region"
     __table_args__ = (
-        Index("ix_revenue_region_filters", "state", "city", "date"),
+        Index("ix_revenue_region_date", "state", "city", "date"),
         {"schema": "marts"},
     )
 
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    state: Mapped[str] = mapped_column(String(2), primary_key=True)
+    city: Mapped[str] = mapped_column(String, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -109,26 +112,30 @@ class RevenueByRegion(AggregateDimensions, Base):
     longitude: Mapped[float | None] = mapped_column(Float)
 
 
-class SellerPerformance(AggregateDimensions, Base):
+class SellerPerformance(Base):
     __tablename__ = "seller_performance"
     __table_args__ = (
-        Index("ix_seller_performance_filters", "seller_id", "date"),
+        Index("ix_seller_performance_date", "seller_id", "date"),
         {"schema": "marts"},
     )
 
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    seller_id: Mapped[str] = mapped_column(String, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     units: Mapped[int] = mapped_column(Integer, nullable=False)
     avg_review_score: Mapped[Decimal | None] = mapped_column(Numeric)
 
 
-class PaymentMethodMix(AggregateDimensions, Base):
+class PaymentMethodMix(Base):
     __tablename__ = "payment_method_mix"
     __table_args__ = (
-        Index("ix_payment_mix_filters", "payment_type", "date"),
+        Index("ix_payment_mix_date", "payment_type", "date"),
         {"schema": "marts"},
     )
 
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    payment_type: Mapped[str] = mapped_column(String, primary_key=True)
     payment_count: Mapped[int] = mapped_column(Integer, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     payment_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
