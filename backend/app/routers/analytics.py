@@ -58,7 +58,7 @@ async def seasonality(
         aliases={"date_from": "date", "date_to": "date"},
     )
     rows = await fetch_all(
-        """SELECT extract(month FROM date)::integer AS month_number,
+        f"""SELECT extract(month FROM date)::integer AS month_number,
                   round(avg(revenue),2) average_daily_revenue,
                   sum(revenue) total_revenue,
                   sum(order_count)::integer order_count

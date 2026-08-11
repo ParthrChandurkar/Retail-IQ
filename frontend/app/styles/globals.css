@@ -1,75 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   color-scheme: light;
   --background: #ffffff;
   --surface: #f7f9fc;
   --border: #e4e9f0;
   --primary: #1b4f72;
+  --primary-foreground: #ffffff;
+  --accent: #d99a2b;
   --text-primary: #0f172a;
   --text-secondary: #5b6472;
+  --success: #1e8a5f;
+  --danger: #c0392b;
+  --chart-1: #1b4f72;
+  --chart-2: #d99a2b;
+  --chart-3: #1e8a5f;
+  --chart-4: #775da6;
+  --chart-grid: #e4e9f0;
+  --radius: 0.75rem;
 }
-
+.dark {
+  color-scheme: dark;
+  --background: #0b0f17;
+  --surface: #131826;
+  --border: #232a3b;
+  --primary: #3e8ed0;
+  --primary-foreground: #0b0f17;
+  --accent: #d99a2b;
+  --text-primary: #e7ecf3;
+  --text-secondary: #9aa5b8;
+  --success: #34c286;
+  --danger: #e06258;
+  --chart-1: #65b5f6;
+  --chart-2: #f0b950;
+  --chart-3: #55d69b;
+  --chart-4: #b49be8;
+  --chart-grid: #2d354a;
+}
 * {
   box-sizing: border-box;
+  border-color: var(--border);
 }
-
-html,
-body {
+html {
   min-height: 100%;
-  margin: 0;
+  background: var(--background);
 }
-
 body {
+  min-height: 100vh;
+  margin: 0;
   background: var(--background);
   color: var(--text-primary);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
-
-.shell {
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.data-grid {
   display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: 2rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
 }
-
-.card {
-  width: min(100%, 48rem);
-  padding: clamp(2rem, 6vw, 4.5rem);
+.chart-tooltip {
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  padding: 0.65rem 0.8rem;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.leaflet-container {
+  min-height: 28rem;
+  border-radius: var(--radius);
   background: var(--surface);
 }
-
-.eyebrow {
-  margin: 0 0 1rem;
-  color: var(--primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(3rem, 10vw, 6rem);
-  letter-spacing: -0.06em;
-  line-height: 0.95;
-}
-
-.summary {
-  max-width: 38rem;
-  margin: 1.5rem 0 2rem;
-  color: var(--text-secondary);
-  font-size: 1.125rem;
-  line-height: 1.7;
-}
-
-.status {
-  display: inline-flex;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--primary);
-  font-size: 0.875rem;
-  font-weight: 600;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
