@@ -1,6 +1,6 @@
 """Product, seller, regional, payment, and review domain routers."""
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Path
 
@@ -272,3 +272,18 @@ async def review_trends(
     filters: Filters, _: CurrentUser
 ) -> DataResponse[list[ReviewRow]]:
     return DataResponse(data=await _review_rows(filters, True))
+
+
+@reviews_router.get("/nlp-summary", response_model=DataResponse[dict[str, Any]])
+async def nlp_summary(filters: Filters, _: CurrentUser) -> DataResponse[dict[str, Any]]:
+    """Return the governed score/trend fallback after the Phase 6 NLP no-go."""
+    distribution = await _review_rows(filters, False)
+    trends = await _review_rows(filters, True)
+    return DataResponse(
+        data={
+            "decision": "no-go",
+            "fallback": "review_score_distribution_and_trend",
+            "score_distribution": [row.model_dump() for row in distribution],
+            "trends": [row.model_dump() for row in trends],
+        }
+    )

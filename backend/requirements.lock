@@ -96,6 +96,10 @@ ipython-pygments-lexers==1.1.1
     # via ipython
 jedi==0.20.0
     # via ipython
+joblib==1.4.2
+    # via
+    #   retail-bi-backend (pyproject.toml)
+    #   scikit-learn
 jsonschema==4.26.0
     # via nbformat
 jsonschema-specifications==2025.9.1
@@ -116,6 +120,8 @@ kagglesdk==0.1.36
     # via kaggle
 kiwisolver==1.5.0
     # via matplotlib
+langdetect==1.0.9
+    # via retail-bi-backend (pyproject.toml)
 librt==0.13.0
     # via mypy
 mako==1.4.1
@@ -147,8 +153,10 @@ numpy==2.4.6
     #   contourpy
     #   matplotlib
     #   pandas
+    #   scikit-learn
     #   scipy
     #   seaborn
+    #   xgboost
 packaging==26.2
     # via
     #   ipykernel
@@ -247,13 +255,19 @@ rsa==4.9.1
     # via python-jose
 ruff==0.16.1
     # via retail-bi-backend (pyproject.toml)
-scipy==1.17.1
+scikit-learn==1.5.0
     # via retail-bi-backend (pyproject.toml)
+scipy==1.17.1
+    # via
+    #   retail-bi-backend (pyproject.toml)
+    #   scikit-learn
+    #   xgboost
 seaborn==0.13.2
     # via retail-bi-backend (pyproject.toml)
 six==1.17.0
     # via
     #   ecdsa
+    #   langdetect
     #   python-dateutil
 sqlalchemy==2.0.51
     # via
@@ -265,6 +279,8 @@ starlette==1.3.1
     # via fastapi
 text-unidecode==1.3
     # via python-slugify
+threadpoolctl==3.6.0
+    # via scikit-learn
 tornado==6.5.7
     # via
     #   ipykernel
@@ -316,3 +332,5 @@ webencodings==0.5.1
     # via bleach
 websockets==17.0.1
     # via uvicorn
+xgboost==2.0.0
+    # via retail-bi-backend (pyproject.toml)

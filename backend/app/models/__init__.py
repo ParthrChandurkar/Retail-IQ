@@ -27,6 +27,7 @@ from app.models.marts import (
     ReviewSummary,
     SellerPerformance,
 )
+from app.models.ml import FeatureImportance, ModelRegistry, Prediction
 
 __all__ = [
     "AdminSetting",
@@ -37,12 +38,15 @@ __all__ = [
     "DataRefreshLog",
     "DeliveryPerformance",
     "KpiSnapshot",
+    "FeatureImportance",
+    "ModelRegistry",
     "Order",
     "OrderItem",
     "PaymentDetail",
     "PaymentSummary",
     "PaymentMethodMix",
     "Product",
+    "Prediction",
     "RefreshToken",
     "RevenueByCategory",
     "RevenueByRegion",

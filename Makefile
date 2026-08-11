@@ -26,7 +26,10 @@ analytics-reports:
 		backend python -m app.analytics.generate_reports
 
 train:
-	@echo "not yet implemented — Phase 6"
+	docker compose run --rm backend alembic upgrade head
+	docker compose run --rm \
+		-e GIT_COMMIT="$(shell git rev-parse HEAD)" \
+		backend python -m app.ml.train
 
 test:
 	@echo "not yet implemented — Phase 8"

@@ -11,6 +11,7 @@ from app.core.errors import install_exception_handlers
 from app.db.bootstrap import create_schemas
 from app.routers.analytics import router as analytics_router
 from app.routers.auth import router as auth_router
+from app.routers.classification import router as classification_router
 from app.routers.customers import router as customers_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.domains import (
@@ -21,11 +22,7 @@ from app.routers.domains import (
     sellers_router,
 )
 from app.routers.health import router as health_router
-from app.routers.system import (
-    admin_router,
-    classification_router,
-    recommendations_router,
-)
+from app.routers.system import admin_router, recommendations_router
 
 
 @asynccontextmanager

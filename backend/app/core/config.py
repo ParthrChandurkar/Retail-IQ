@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     report_dir: Path = Field(
         default=Path("../analytics/reports"), validation_alias="REPORT_DIR"
     )
+    model_registry_dir: Path = Field(
+        default=Path("ml/registry"), validation_alias="MODEL_REGISTRY_DIR"
+    )
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
