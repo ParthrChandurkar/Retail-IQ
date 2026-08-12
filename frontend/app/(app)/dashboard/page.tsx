@@ -76,12 +76,8 @@ export default function DashboardPage() {
         limit: 8,
       }),
   });
-  if ([summary, trend, categories, sellers, products].some((q) => q.isLoading))
-    return <DashboardSkeleton />;
-  const failed = [summary, trend, categories, sellers, products].find(
-    (q) => q.error,
-  );
-  if (failed) return <ErrorState error={failed.error} />;
+  if (summary.isLoading) return <DashboardSkeleton />;
+  if (summary.error) return <ErrorState error={summary.error} />;
   const kpi = summary.data!.data;
   return (
     <>
@@ -122,23 +118,47 @@ export default function DashboardPage() {
       </KPIGrid>
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="xl:col-span-2">
-          <RevenueTrendChart data={trend.data!.data} accessible />
+          {trend.isLoading ? (
+            <Skeleton className="h-96" />
+          ) : trend.error ? (
+            <ErrorState error={trend.error} />
+          ) : (
+            <RevenueTrendChart data={trend.data!.data} accessible />
+          )}
         </div>
-        <PerformanceBar title="Top categories" data={categories.data!.data} />
-        <PerformanceBar title="Top sellers" data={sellers.data!.data} />
+        {categories.isLoading ? (
+          <Skeleton className="h-80" />
+        ) : categories.error ? (
+          <ErrorState error={categories.error} />
+        ) : (
+          <PerformanceBar title="Top categories" data={categories.data!.data} />
+        )}
+        {sellers.isLoading ? (
+          <Skeleton className="h-80" />
+        ) : sellers.error ? (
+          <ErrorState error={sellers.error} />
+        ) : (
+          <PerformanceBar title="Top sellers" data={sellers.data!.data} />
+        )}
         <ChartCard
           title="Top products"
           description="Product-level delivered revenue"
         >
-          <DataTable
-            headers={["Product", "Category", "Revenue", "Units"]}
-            rows={products.data!.data.map((row) => [
-              row.product_id.slice(0, 12),
-              row.category ?? "Uncategorized",
-              formatCurrency(row.revenue),
-              row.units,
-            ])}
-          />
+          {products.isLoading ? (
+            <Skeleton className="h-64" />
+          ) : products.error ? (
+            <ErrorState error={products.error} />
+          ) : (
+            <DataTable
+              headers={["Product", "Category", "Revenue", "Units"]}
+              rows={products.data!.data.map((row) => [
+                row.product_id.slice(0, 12),
+                row.category ?? "Uncategorized",
+                formatCurrency(row.revenue),
+                row.units,
+              ])}
+            />
+          )}
         </ChartCard>
       </div>
       <Freshness value={summary.data?.generated_at} />

@@ -18,6 +18,8 @@ node_modules/
 .next/
 out/
 *.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
 
 # Generated ML artifacts
 backend/ml/registry/*
