@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" role="img" aria-labelledby="title desc">
+  <title id="title">Retail IQ system architecture</title>
+  <desc id="desc">Data flows from nine Olist CSV files through idempotent ETL into PostgreSQL raw, curated, marts, and machine-learning schemas. FastAPI serves a Next.js dashboard, while Power BI reads only the marts schema.</desc>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081225"/>
+      <stop offset="1" stop-color="#101c38"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="data" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0891b2"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="analytics" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#be185d"/>
+    </linearGradient>
+    <linearGradient id="serve" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#0369a1"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M1 1l9 5-9 5z" fill="#60a5fa"/>
+    </marker>
+    <style>
+      .title { font: 700 34px Inter,Segoe UI,Arial,sans-serif; fill: #f8fafc; }
+      .subtitle { font: 400 17px Inter,Segoe UI,Arial,sans-serif; fill: #94a3b8; }
+      .lane { font: 700 13px Inter,Segoe UI,Arial,sans-serif; fill: #93c5fd; letter-spacing: 2px; }
+      .node-title { font: 700 18px Inter,Segoe UI,Arial,sans-serif; fill: #f8fafc; }
+      .node-copy { font: 400 13px Inter,Segoe UI,Arial,sans-serif; fill: #cbd5e1; }
+      .schema { font: 700 16px Inter,Segoe UI,Arial,sans-serif; fill: #ecfeff; }
+      .schema-copy { font: 400 12px Inter,Segoe UI,Arial,sans-serif; fill: #a5f3fc; }
+      .chip { font: 600 12px Inter,Segoe UI,Arial,sans-serif; fill: #dbeafe; }
+      .flow { fill: none; stroke: #60a5fa; stroke-width: 3; marker-end: url(#arrow); }
+      .flow-soft { fill: none; stroke: #475569; stroke-width: 2; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1400" height="860" rx="28" fill="url(#canvas)"/>
+  <circle cx="1230" cy="30" r="270" fill="#2563eb" opacity="0.08"/>
+  <circle cx="70" cy="820" r="230" fill="#7c3aed" opacity="0.08"/>
+
+  <g transform="translate(60 52)">
+    <rect width="46" height="46" rx="12" fill="url(#brand)"/>
+    <path d="M13 14h12c7 0 11 3 11 9 0 4-2 7-6 8l7 10h-8l-6-9h-3v9h-7V14zm7 6v7h5c3 0 4-1 4-4s-1-3-4-3h-5z" fill="#fff" transform="scale(.78) translate(5 3)"/>
+    <text x="62" y="27" class="title">Retail IQ Architecture</text>
+    <text x="62" y="53" class="subtitle">Governed data → trustworthy analytics → business decisions</text>
+  </g>
+
+  <text x="60" y="155" class="lane">01 · INGEST</text>
+  <text x="302" y="155" class="lane">02 · GOVERN &amp; STORE</text>
+  <text x="760" y="155" class="lane">03 · ANALYZE &amp; MODEL</text>
+  <text x="1090" y="155" class="lane">04 · DELIVER</text>
+
+  <g filter="url(#shadow)">
+    <rect x="60" y="188" width="190" height="132" rx="18" fill="#16233e" stroke="#334155"/>
+    <circle cx="96" cy="226" r="20" fill="#0e7490"/>
+    <path d="M86 218h20v17H86zm3-5h14v5H89z" fill="none" stroke="#ecfeff" stroke-width="2"/>
+    <text x="126" y="224" class="node-title">Olist Dataset</text>
+    <text x="83" y="270" class="node-copy">9 source CSV files</text>
+    <text x="83" y="294" class="node-copy">≈100K marketplace orders</text>
+
+    <rect x="60" y="378" width="190" height="164" rx="18" fill="#16233e" stroke="#334155"/>
+    <circle cx="96" cy="416" r="20" fill="#7c3aed"/>
+    <path d="M86 416h20m-10-10v20m-7-3l14-14m0 14l-14-14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <text x="126" y="414" class="node-title">Batch Pipeline</text>
+    <text x="83" y="461" class="node-copy">Idempotent ingestion</text>
+    <text x="83" y="485" class="node-copy">Cleaning + DQ reports</text>
+    <text x="83" y="509" class="node-copy">Alembic migrations</text>
+  </g>
+
+  <path class="flow" d="M155 320v48"/>
+  <path class="flow" d="M250 460h46"/>
+
+  <g filter="url(#shadow)">
+    <rect x="302" y="188" width="400" height="436" rx="22" fill="#101f36" stroke="#155e75" stroke-width="2"/>
+    <rect x="302" y="188" width="400" height="58" rx="22" fill="url(#data)"/>
+    <path d="M302 224h400v22H302z" fill="url(#data)"/>
+    <text x="330" y="224" class="node-title">PostgreSQL 15 · Governed Data Platform</text>
+
+    <rect x="330" y="273" width="158" height="104" rx="14" fill="#123047" stroke="#0891b2"/>
+    <text x="350" y="307" class="schema">raw</text>
+    <text x="350" y="334" class="schema-copy">1:1 source landing</text>
+    <text x="350" y="355" class="schema-copy">audit-friendly</text>
+
+    <rect x="516" y="273" width="158" height="104" rx="14" fill="#123047" stroke="#0891b2"/>
+    <text x="536" y="307" class="schema">curated</text>
+    <text x="536" y="334" class="schema-copy">clean entities</text>
+    <text x="536" y="355" class="schema-copy">validated relations</text>
+
+    <rect x="330" y="405" width="158" height="104" rx="14" fill="#123047" stroke="#14b8a6"/>
+    <text x="350" y="439" class="schema">marts</text>
+    <text x="350" y="466" class="schema-copy">pre-aggregated KPIs</text>
+    <text x="350" y="487" class="schema-copy">filter-aware grains</text>
+
+    <rect x="516" y="405" width="158" height="104" rx="14" fill="#123047" stroke="#14b8a6"/>
+    <text x="536" y="439" class="schema">ml</text>
+    <text x="536" y="466" class="schema-copy">model registry</text>
+    <text x="536" y="487" class="schema-copy">metrics + lineage</text>
+
+    <path class="flow-soft" d="M488 325h22"/>
+    <path class="flow-soft" d="M595 379v20"/>
+    <path class="flow-soft" d="M516 457h-22"/>
+
+    <rect x="330" y="544" width="344" height="49" rx="12" fill="#0c4a6e" opacity="0.8"/>
+    <text x="350" y="574" class="chip">✓ Shared metric dictionary · ✓ Data lineage · ✓ Quality gates</text>
+  </g>
+
+  <path class="flow" d="M702 333h52"/>
+  <path class="flow" d="M702 478h52"/>
+
+  <g filter="url(#shadow)">
+    <rect x="760" y="188" width="266" height="206" rx="18" fill="#1d1b3b" stroke="#7c3aed"/>
+    <rect x="760" y="188" width="266" height="8" rx="4" fill="url(#analytics)"/>
+    <text x="788" y="237" class="node-title">Analytics Engine</text>
+    <text x="788" y="273" class="node-copy">EDA + statistical tests</text>
+    <text x="788" y="300" class="node-copy">RFM · CLV · segmentation</text>
+    <text x="788" y="327" class="node-copy">Trends + recommendations</text>
+    <rect x="788" y="350" width="198" height="26" rx="13" fill="#4c1d95"/>
+    <text x="807" y="368" class="chip">Business intelligence first</text>
+
+    <rect x="760" y="430" width="266" height="194" rx="18" fill="#1d1b3b" stroke="#be185d"/>
+    <rect x="760" y="430" width="266" height="8" rx="4" fill="url(#analytics)"/>
+    <text x="788" y="479" class="node-title">ML Pipeline</text>
+    <text x="788" y="515" class="node-copy">Evidence-scored target</text>
+    <text x="788" y="542" class="node-copy">5-model fair comparison</text>
+    <text x="788" y="569" class="node-copy">Explainable satisfaction API</text>
+    <rect x="788" y="587" width="205" height="26" rx="13" fill="#831843"/>
+    <text x="807" y="605" class="chip">Leakage-safe validation</text>
+  </g>
+
+  <path class="flow" d="M1026 291h58"/>
+  <path class="flow" d="M1026 527h58"/>
+
+  <g filter="url(#shadow)">
+    <rect x="1090" y="188" width="250" height="142" rx="18" fill="#102a49" stroke="#2563eb"/>
+    <rect x="1090" y="188" width="8" height="142" rx="4" fill="url(#serve)"/>
+    <text x="1124" y="230" class="node-title">FastAPI</text>
+    <text x="1124" y="262" class="node-copy">JWT · validation · routing</text>
+    <text x="1124" y="286" class="node-copy">Analytics + inference APIs</text>
+    <rect x="1124" y="301" width="125" height="20" rx="10" fill="#1e40af"/>
+    <text x="1140" y="315" class="chip">OpenAPI contract</text>
+
+    <rect x="1090" y="378" width="250" height="112" rx="18" fill="#102a49" stroke="#38bdf8"/>
+    <text x="1124" y="420" class="node-title">Next.js 14</text>
+    <text x="1124" y="450" class="node-copy">Responsive SaaS dashboards</text>
+    <text x="1124" y="474" class="node-copy">Typed client · light/dark UI</text>
+
+    <rect x="1090" y="538" width="250" height="112" rx="18" fill="#2b2307" stroke="#facc15"/>
+    <text x="1124" y="580" class="node-title">Power BI</text>
+    <text x="1124" y="610" class="node-copy">Final-grain marts + DAX</text>
+    <text x="1124" y="634" class="node-copy">SELECT-only database role</text>
+  </g>
+
+  <path class="flow" d="M1215 330v38"/>
+  <path class="flow-soft" d="M1090 594H1014V664H488V519"/>
+
+  <g transform="translate(60 704)">
+    <rect width="1280" height="100" rx="18" fill="#0f1c32" stroke="#334155"/>
+    <text x="28" y="35" class="lane">CROSS-CUTTING CONTROLS</text>
+    <rect x="28" y="53" width="175" height="28" rx="14" fill="#172554"/><text x="48" y="72" class="chip">🔐 JWT + RBAC</text>
+    <rect x="219" y="53" width="205" height="28" rx="14" fill="#164e63"/><text x="239" y="72" class="chip">🧪 Automated QA</text>
+    <rect x="440" y="53" width="190" height="28" rx="14" fill="#3b0764"/><text x="460" y="72" class="chip">📊 Metric parity</text>
+    <rect x="646" y="53" width="205" height="28" rx="14" fill="#422006"/><text x="666" y="72" class="chip">⚡ Pre-aggregated</text>
+    <rect x="867" y="53" width="210" height="28" rx="14" fill="#1e293b"/><text x="887" y="72" class="chip">🐳 Docker Compose</text>
+    <rect x="1093" y="53" width="159" height="28" rx="14" fill="#052e16"/><text x="1113" y="72" class="chip">✓ CI green</text>
+  </g>
+</svg>
