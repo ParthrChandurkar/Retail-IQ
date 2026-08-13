@@ -1,10 +1,19 @@
 # Retail IQ — Retail Business Intelligence Platform
 
+[![CI](https://github.com/ParthrChandurkar/Retail-IQ/actions/workflows/ci.yml/badge.svg)](https://github.com/ParthrChandurkar/Retail-IQ/actions/workflows/ci.yml)
+![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![Next.js 14](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)
+![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![Power BI](https://img.shields.io/badge/Power%20BI-Ready-F2C811?logo=powerbi&logoColor=111827)
+
 An analytics-first retail decision-support platform combining governed ETL,
 statistical analysis, interactive SaaS dashboards, customer analytics, and an
 explainable satisfaction classifier over the Brazilian Olist marketplace.
 
-## Problem Statement
+> **From nine raw commerce files to governed KPIs, customer intelligence,
+> explainable predictions, and decision-ready dashboards.**
+
+## 🎯 Problem Statement
 
 Retail datasets contain orders, customers, products, sellers, payments,
 delivery events, and reviews at different grains. Retail IQ turns those files
@@ -13,7 +22,7 @@ learning as the whole product. The platform prioritizes data quality, BI,
 exploratory and statistical analysis, RFM/CLV, interactive filtering, and
 auditable recommendations; ML supports that analytics foundation.
 
-## Dataset
+## 🗂️ Dataset
 
 The project uses the
 [Olist Brazilian E-Commerce Public Dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce):
@@ -25,30 +34,26 @@ Revenue, orders, customers, AOV, and historical CLV include delivered orders
 only. Revenue equals item price plus freight, and purchase timestamp is the
 primary date axis.
 
-## Architecture
+## 🏗️ Architecture
 
-```mermaid
-flowchart LR
-    CSV[9 Olist CSVs] --> ETL[Idempotent ETL]
-    ETL --> RAW[(raw)] --> CUR[(curated)]
-    CUR --> ANA[Analytics, statistics, RFM/CLV]
-    ANA --> MART[(marts)]
-    CUR --> TRAIN[Leakage-safe ML training] --> REG[(ml registry)]
-    WEB[Next.js dashboards] --> API[FastAPI]
-    API --> CUR
-    API --> MART
-    API --> REG
-    PBI[Power BI Desktop] -->|read-only| MART
-```
+![Retail IQ end-to-end architecture](docs/architecture.svg)
+
+| Flow | What happens |
+|---|---|
+| **1 · Ingest** | Nine Olist CSVs enter an idempotent, quality-reported batch pipeline. |
+| **2 · Govern** | PostgreSQL separates source landing (`raw`), clean entities (`curated`), aggregates (`marts`), and model governance (`ml`). |
+| **3 · Analyze** | EDA, statistics, RFM, CLV, segmentation, recommendations, and leakage-safe model training share governed definitions. |
+| **4 · Deliver** | FastAPI serves the typed Next.js dashboards; Power BI receives SELECT-only access to finalized marts. |
 
 Next.js consumes FastAPI through an OpenAPI-generated typed client. FastAPI
 owns JWT authentication, validation, mart routing, analytics, recommendations,
 and inference. PostgreSQL separates ingestion, clean entities, dashboard marts,
 and model governance. Batch jobs populate the same marts consumed by the web
 dashboard and the least-privilege Power BI connection. See
-[`docs/architecture.md`](docs/architecture.md) for flows and trust boundaries.
+[`docs/architecture.md`](docs/architecture.md) for request flows, batch flows,
+deployment topology, and trust boundaries.
 
-## Tech Stack
+## 🧰 Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -60,7 +65,7 @@ dashboard and the least-privilege Power BI connection. See
 | Delivery & QA | Docker Compose, Make, GitHub Actions, pytest, Ruff, mypy, Vitest/RTL, Playwright, axe-core |
 | BI | Power BI Desktop through read-only PostgreSQL marts and governed DAX |
 
-## Installation
+## 🚀 Installation
 
 Prerequisites: Git, Docker Desktop with the Linux engine running, GNU Make,
 and either Kaggle credentials or the manually downloaded dataset. Node.js 20+
@@ -70,14 +75,14 @@ report locally.
 
 This is the complete documented clean-clone sequence from Addendum §12:
 
-1. Clone the repository:
+1. **Clone the repository:**
 
    ```bash
    git clone https://github.com/ParthrChandurkar/Retail-IQ.git
    cd Retail-IQ
    ```
 
-2. Create local environment files:
+2. **Create local environment files:**
 
    ```bash
    cp backend/.env.example backend/.env
@@ -93,7 +98,7 @@ This is the complete documented clean-clone sequence from Addendum §12:
    These values create the first administrator and the Power BI database login;
    they are never committed.
 
-3. Download all nine CSVs using one option:
+3. **Download all nine CSVs using one option:**
 
    - Manual: download the
      [Kaggle archive](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
@@ -105,38 +110,38 @@ This is the complete documented clean-clone sequence from Addendum §12:
      make download-data
      ```
 
-4. Start PostgreSQL, FastAPI, and Next.js:
+4. **Start PostgreSQL, FastAPI, and Next.js:**
 
    ```bash
    docker compose up -d
    ```
 
-5. Ingest and clean the dataset:
+5. **Ingest and clean the dataset:**
 
    ```bash
    make etl
    ```
 
-6. Build marts and generate EDA/statistics reports:
+6. **Build marts and generate EDA/statistics reports:**
 
    ```bash
    make analytics-reports
    ```
 
-7. Train, compare, select, and register the classifier:
+7. **Train, compare, select, and register the classifier:**
 
    ```bash
    make train
    ```
 
-8. Open <http://localhost:3000> and sign in with the `ADMIN_EMAIL` and
+8. **Open <http://localhost:3000>** and sign in with the `ADMIN_EMAIL` and
    `ADMIN_PASSWORD` configured in step 2.
 
 The full workflow is intentionally batch-oriented and model training can take
 several minutes. Check service health with `docker compose ps`; stop everything
 with `make down`. There are no additional undocumented setup steps.
 
-## Usage
+## 🧭 Usage
 
 - Sign in at <http://localhost:3000/login>. Access tokens stay in memory; the
   rotating refresh token is an httpOnly cookie.
@@ -150,7 +155,7 @@ with `make down`. There are no additional undocumented setup steps.
 - Run `make test` for backend quality/tests and frontend lint/type/unit tests.
 - Connect Power BI using [`docs/powerbi-integration.md`](docs/powerbi-integration.md).
 
-## Folder Structure
+## 📁 Folder Structure
 
 ```text
 Retail-IQ/
@@ -171,7 +176,7 @@ Retail-IQ/
 └── Makefile
 ```
 
-## Features
+## ✨ Features
 
 - [x] Idempotent nine-file ingestion, cleaned curated entities, outlier flags,
   and generated pre/post data-quality reports.
@@ -199,28 +204,28 @@ Retail-IQ/
 - [x] CI-enforced lint, type-check, unit/integration/e2e, accessibility,
   production build, and Docker-image verification.
 
-## Screenshots
+## 🖼️ Screenshots
 
 These PNGs were captured from the populated local application in a real Chromium
 browser during Phase 9.
 
-### Executive dashboard
+### 📈 Executive dashboard
 
 ![Retail IQ executive dashboard](docs/screenshots/executive-dashboard.png)
 
-### Customer analytics
+### 👥 Customer analytics
 
 ![Retail IQ customer analytics](docs/screenshots/customer-analytics.png)
 
-### Satisfaction classification
+### 🧠 Satisfaction classification
 
 ![Retail IQ classification dashboard](docs/screenshots/classification-dashboard.png)
 
-### Insights and recommendations
+### 💡 Insights and recommendations
 
 ![Retail IQ insights dashboard](docs/screenshots/insights-dashboard.png)
 
-## Target Variable Selection Summary
+## 🧪 Target Variable Selection Summary
 
 Retail IQ did not assume a label. It scored four candidates from real EDA and
 statistics using the SRS rubric:
@@ -239,7 +244,7 @@ by order and excludes every review-derived outcome field. This evidence-first
 gate is documented in
 [`target_variable_selection.md`](analytics/reports/target_variable_selection.md).
 
-## Future Scope
+## 🔭 Future Scope
 
 - Multi-tenant organizations, row-level access policies, and self-service users.
 - Streaming/CDC ingestion and scheduled orchestration rather than local batch
@@ -259,7 +264,7 @@ The Phase 8 KPI-paint gap was a fixed synchronization defect, not an unresolved
 device inefficiency: supporting charts now load progressively, and measured
 desktop/tablet/mobile warm KPI paints are all below 1.5 seconds.
 
-## License / Academic Note
+## 🎓 License / Academic Note
 
 Retail IQ is a final-year B.Tech Data Science & Analytics academic project built
 with production-grade engineering practices. The Olist dataset remains governed
