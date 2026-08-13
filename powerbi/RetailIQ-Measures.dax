@@ -1,0 +1,79 @@
+// Retail IQ — Addendum §7 metric dictionary
+// Mark the Date table below as the model's date table.
+
+Date =
+CALENDAR (
+    MIN ( revenue_daily[date] ),
+    MAX ( revenue_daily[date] )
+)
+
+Revenue =
+SUM ( revenue_daily[revenue] )
+
+Delivered Orders =
+SUM ( revenue_daily[order_count] )
+
+Average Order Value =
+DIVIDE ( [Revenue], [Delivered Orders] )
+
+Customer Count =
+IF (
+    ISFILTERED ( 'Date'[Date] ),
+    BLANK (),
+    COUNTROWS ( customer_profile )
+)
+
+Previous Month Revenue =
+VAR LatestVisibleDate = MAX ( 'Date'[Date] )
+VAR CurrentMonthStart = DATE ( YEAR ( LatestVisibleDate ), MONTH ( LatestVisibleDate ), 1 )
+VAR PreviousMonthStart = EDATE ( CurrentMonthStart, -1 )
+VAR PreviousMonthEnd = EOMONTH ( PreviousMonthStart, 0 )
+RETURN
+    CALCULATE (
+        [Revenue],
+        REMOVEFILTERS ( 'Date' ),
+        DATESBETWEEN ( 'Date'[Date], PreviousMonthStart, PreviousMonthEnd )
+    )
+
+Current Month Revenue =
+VAR LatestVisibleDate = MAX ( 'Date'[Date] )
+VAR CurrentMonthStart = DATE ( YEAR ( LatestVisibleDate ), MONTH ( LatestVisibleDate ), 1 )
+RETURN
+    CALCULATE (
+        [Revenue],
+        REMOVEFILTERS ( 'Date' ),
+        DATESBETWEEN ( 'Date'[Date], CurrentMonthStart, EOMONTH ( LatestVisibleDate, 0 ) )
+    )
+
+Revenue MoM Growth % =
+DIVIDE (
+    [Current Month Revenue] - [Previous Month Revenue],
+    [Previous Month Revenue]
+)
+
+Prior Year Revenue =
+VAR LatestVisibleDate = MAX ( 'Date'[Date] )
+VAR PriorYearMonthStart =
+    DATE ( YEAR ( LatestVisibleDate ) - 1, MONTH ( LatestVisibleDate ), 1 )
+RETURN
+    CALCULATE (
+        [Revenue],
+        REMOVEFILTERS ( 'Date' ),
+        DATESBETWEEN (
+            'Date'[Date],
+            PriorYearMonthStart,
+            EOMONTH ( PriorYearMonthStart, 0 )
+        )
+    )
+
+Revenue YoY Growth % =
+DIVIDE (
+    [Current Month Revenue] - [Prior Year Revenue],
+    [Prior Year Revenue]
+)
+
+Lifetime Value (to date) =
+SUM ( customer_profile[total_spend] )
+
+Average Lifetime Value (to date) =
+AVERAGE ( customer_profile[total_spend] )

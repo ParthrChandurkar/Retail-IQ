@@ -32,4 +32,5 @@ train:
 		backend python -m app.ml.train
 
 test:
-	@echo "not yet implemented — Phase 8"
+	docker compose run --rm --no-deps backend sh -c "ruff check app tests alembic && ruff format --check app tests alembic && mypy app && pytest"
+	cd frontend && npm ci && npm run lint && npm run typecheck && npm test

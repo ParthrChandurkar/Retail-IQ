@@ -6,7 +6,8 @@ repository. Use this documented setup sequence:
 1. Clone the repository:
 
    ```bash
-   git clone <repo>
+   git clone https://github.com/ParthrChandurkar/Retail-IQ.git
+   cd Retail-IQ
    ```
 
 2. Create local environment files:
@@ -53,5 +54,6 @@ repository. Use this documented setup sequence:
 
 8. Open <http://localhost:3000>.
 
-During Phase 1, `download-data`, `etl`, `analytics-reports`, and `train` are
-stable interface placeholders and do not perform their later-phase work.
+All four commands are implemented. ETL is idempotent; analytics builds the
+dashboard marts and reports; training compares five classifiers and registers
+the selected model.

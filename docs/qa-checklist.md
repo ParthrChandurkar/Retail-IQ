@@ -92,4 +92,22 @@ CLV distribution initially measured 342.34 ms p95. Migration `20260812_0005` add
 4. Public login triggered an unnecessary refresh request, producing an expected 401 console error; refresh is now attempted only on protected routes.
 5. Browser audit found a favicon 404; added the application icon and re-verified a clean console.
 
-**Final decision:** Phase 8 exit criteria are satisfied. Phase 9 has not started.
+## Phase 9 deployment verification
+
+- [x] Rehearsed the documented sequence against a new Compose project and an
+  empty PostgreSQL volume: migrations, admin bootstrap, nine-file ETL, marts,
+  reports, model training/registration, and all services completed successfully.
+- [x] The populated rehearsal verified 39 API operations, backend and frontend
+  health, and a registered Logistic Regression model (`model_id = 1`).
+- [x] The Power BI login selected from `marts.kpi_snapshot` and was denied access
+  to `raw`, `curated`, and `ml`.
+- [x] Power BI reconciliation was exact: Revenue **R$ 15,419,773.75** and AOV
+  **R$ 159.8268387611683493** matched `marts.kpi_snapshot` and the governed
+  `revenue_daily` calculation.
+- [x] A 512 MB PostgreSQL shared-memory allocation is declared in Compose; this
+  resolves the clean-clone model-training failure observed with Docker's default
+  64 MB `/dev/shm` allocation.
+- [x] Final production images build, `GET /health` returns 200, the frontend root
+  returns 200, and the complete local quality suite passes.
+
+**Final decision:** Phase 8 and Phase 9 verification criteria are signed off.
