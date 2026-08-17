@@ -26,6 +26,9 @@ inferred from the dataset description.
   unsupported by this source.
 - The source `Region` is retained as `region_as_reported` only. It is not a
   geographic grouping because all 10 states occur in all four values.
+- `Year` disagrees with the year of `Order Date` on 80,023 rows (80.0230%) and
+  with `Sales Date` on 79,888 rows (79.8880%). Both auxiliary fields remain
+  raw-only; the binding curated business date is `order_date`.
 
 ## Static reference provenance
 

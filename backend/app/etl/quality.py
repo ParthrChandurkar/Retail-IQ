@@ -103,6 +103,13 @@ async def generate_pre_clean_report() -> Path:
                 "SELECT CORR(quantity::numeric, sales) FROM raw.store_transactions"
             )
         )
+        year_mismatches = await connection.fetchrow(
+            """SELECT
+                   COUNT(*) FILTER (WHERE year <> EXTRACT(YEAR FROM sales_date)) AS sales_date,
+                   COUNT(*) FILTER (WHERE year <> EXTRACT(YEAR FROM order_date)) AS order_date
+               FROM raw.store_transactions"""
+        )
+        assert year_mismatches is not None
         states_with_all_regions = int(
             await connection.fetchval(
                 "SELECT COUNT(*) FROM (SELECT state FROM raw.store_transactions "
@@ -142,6 +149,16 @@ async def generate_pre_clean_report() -> Path:
         f"| Order Date | {date_ranges[0]} | {date_ranges[1]} | {nulls['order_date']:,} |",
         f"| Ship Date | {date_ranges[2]} | {date_ranges[3]} | {nulls['ship_date']:,} |",
         f"| Sales Date | {date_ranges[4]} | {date_ranges[5]} | {nulls['sales_date']:,} |",
+        "",
+        "### Source date consistency",
+        "",
+        "| Check | Mismatched rows | Mismatch rate |",
+        "|---|---:|---:|",
+        f"| `Year` vs Sales Date year | {year_mismatches[0]:,} | {year_mismatches[0] / count * 100:.4f}% |",
+        f"| `Year` vs Order Date year | {year_mismatches[1]:,} | {year_mismatches[1] / count * 100:.4f}% |",
+        "",
+        "The independently generated `Year` and `Sales Date` fields are retained "
+        "in raw for auditability but are not used to overwrite the binding `Order Date`.",
         "",
         "## Column null rates",
         "",
@@ -262,6 +279,12 @@ async def generate_post_clean_report() -> Path:
                 "SELECT COUNT(*) FROM (SELECT DISTINCT state, region FROM raw.store_transactions) p"
             )
         )
+        year_mismatches = int(
+            await connection.fetchval(
+                "SELECT COUNT(*) FROM raw.store_transactions "
+                "WHERE year <> EXTRACT(YEAR FROM order_date)"
+            )
+        )
     finally:
         await connection.close()
 
@@ -290,6 +313,13 @@ async def generate_post_clean_report() -> Path:
         "Discount values were converted from source fractions (`0.00–0.50`) to "
         "percentage points (`0–50`) to satisfy the curated `discount_pct` contract.",
         "No source value was imputed or fabricated.",
+        "",
+        "### Date-field anomaly",
+        "",
+        f"`Year` disagrees with the year of `Order Date` on **{year_mismatches:,} "
+        f"rows ({year_mismatches / raw_count * 100:.4f}%)**. `Year` and `Sales Date` remain "
+        "raw-only audit fields; curated orders use the v2.0 binding `order_date` and no "
+        "source date is silently overwritten.",
         "",
         "### Duplicate handling",
         "",
