@@ -1,7 +1,7 @@
 # Dataset Acquisition
 
-The Olist Brazilian E-Commerce dataset is not redistributed in this
-repository. Use this documented setup sequence:
+The Indian Store Data source is not redistributed in this repository. Use this
+documented setup sequence:
 
 1. Clone the repository:
 
@@ -17,11 +17,11 @@ repository. Use this documented setup sequence:
    cp frontend/.env.example frontend/.env
    ```
 
-3. Download the dataset using either option:
+3. Acquire `store_sales_data (2).csv` using either option:
 
    - Manual: download it from
-     [Kaggle](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
-     and place all nine CSV files in `data/raw/`.
+     [Kaggle](https://www.kaggle.com/datasets/abuhumzakhan/store-data), extract
+     it, and place `store_sales_data (2).csv` in `data/raw/`.
    - Automated: set `KAGGLE_USERNAME` and `KAGGLE_KEY`, then run:
 
      ```bash
@@ -54,6 +54,6 @@ repository. Use this documented setup sequence:
 
 8. Open <http://localhost:3000>.
 
-All four commands are implemented. ETL is idempotent; analytics builds the
-dashboard marts and reports; training compares five classifiers and registers
-the selected model.
+During migration M1, `make download-data` and `make etl` target Indian Store
+Data. Marts, analytics, ML, API, and frontend migration are gated to M2 and
+later phases.

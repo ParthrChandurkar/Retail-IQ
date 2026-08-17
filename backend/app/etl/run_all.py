@@ -70,7 +70,10 @@ async def run_etl() -> None:
         pre_report = await generate_pre_clean_report()
         curated_counts = await clean_curated()
         post_report = await generate_post_clean_report()
-        rows_affected = sum(raw_counts.values()) + sum(curated_counts.values())
+        # Static state references are validated and counted, but not rewritten by ETL.
+        rows_affected = sum(raw_counts.values()) + sum(
+            curated_counts[name] for name in ("customers", "products", "orders")
+        )
         await _finish_log(
             log_id,
             status="success",

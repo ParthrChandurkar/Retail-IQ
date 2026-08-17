@@ -1,4 +1,4 @@
-"""Acquire or validate the nine Olist source CSV files."""
+"""Acquire or validate the single Indian Store Data source CSV."""
 
 import os
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 from app.core.config import get_settings
 from app.etl.constants import DATASETS
 
-KAGGLE_DATASET = "olistbr/brazilian-ecommerce"
+KAGGLE_DATASET = "abuhumzakhan/store-data"
 
 
 def missing_files(data_dir: Path) -> list[str]:
@@ -23,7 +23,7 @@ def download_or_validate() -> None:
 
     missing = missing_files(data_dir)
     if not missing:
-        print(f"All {len(DATASETS)} source CSVs are present in {data_dir}.")
+        print(f"The Indian Store Data CSV is present in {data_dir}.")
         return
 
     if not os.getenv("KAGGLE_USERNAME") or not os.getenv("KAGGLE_KEY"):
@@ -45,7 +45,7 @@ def download_or_validate() -> None:
             f"Kaggle download completed but files are missing: {missing}"
         )
 
-    print(f"Downloaded and validated all {len(DATASETS)} CSVs in {data_dir}.")
+    print(f"Downloaded and validated Indian Store Data in {data_dir}.")
 
 
 if __name__ == "__main__":

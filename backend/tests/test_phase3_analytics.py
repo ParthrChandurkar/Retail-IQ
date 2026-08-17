@@ -21,7 +21,6 @@ from app.services.stats_service import (
     compute_anova,
     compute_chi_square,
     compute_welch_ttest,
-    t_test_review_late,
 )
 
 
@@ -135,11 +134,9 @@ def test_refactored_marts_have_endpoint_specific_columns_and_grains() -> None:
         )
 
 
-def test_late_delivery_and_ttest_use_exact_timestamp_label() -> None:
+def test_m1_shipping_duration_does_not_invent_a_delay_label() -> None:
     cleaning_source = inspect.getsource(_load_orders)
-    ttest_source = inspect.getsource(t_test_review_late)
 
-    assert "source.order_delivered_customer_date" in cleaning_source
-    assert "> source.order_estimated_delivery_date" in cleaning_source
-    assert "SELECT o.is_late, r.review_score" in ttest_source
-    assert "delivery_delay_days > 0" not in ttest_source
+    assert "source.ship_date - source.order_date" in cleaning_source
+    assert "source.calculated_shipping_days, NULL" in cleaning_source
+    assert "is_delayed_shipment" in cleaning_source

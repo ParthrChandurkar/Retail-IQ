@@ -1,117 +1,37 @@
-"""Constraint-free SQLAlchemy table definitions for the raw source mirror."""
+"""Loose, nullable mirror of the Indian Store Data CSV."""
 
-from sqlalchemy import Column, DateTime, Integer, MetaData, Numeric, String, Table, Text
+from sqlalchemy import Column, Date, Integer, MetaData, Numeric, String, Table
 
 raw_metadata = MetaData(schema="raw")
 
-customers = Table(
-    "customers",
+store_transactions = Table(
+    "store_transactions",
     raw_metadata,
     Column("customer_id", String, nullable=True),
-    Column("customer_unique_id", String, nullable=True),
-    Column("customer_zip_code_prefix", String, nullable=True),
-    Column("customer_city", String, nullable=True),
-    Column("customer_state", String, nullable=True),
-)
-
-orders = Table(
-    "orders",
-    raw_metadata,
+    Column("customer_name", String, nullable=True),
+    Column("last_name", String, nullable=True),
+    Column("date_of_birth", Date, nullable=True),
+    Column("sales", Numeric, nullable=True),
+    Column("year", Integer, nullable=True),
+    Column("outlet_type", String, nullable=True),
+    Column("city_type", String, nullable=True),
+    Column("category_of_goods", String, nullable=True),
+    Column("region", String, nullable=True),
+    Column("country", String, nullable=True),
+    Column("segment", String, nullable=True),
+    Column("sales_date", Date, nullable=True),
     Column("order_id", String, nullable=True),
-    Column("customer_id", String, nullable=True),
-    Column("order_status", String, nullable=True),
-    Column("order_purchase_timestamp", DateTime, nullable=True),
-    Column("order_approved_at", DateTime, nullable=True),
-    Column("order_delivered_carrier_date", DateTime, nullable=True),
-    Column("order_delivered_customer_date", DateTime, nullable=True),
-    Column("order_estimated_delivery_date", DateTime, nullable=True),
-)
-
-order_items = Table(
-    "order_items",
-    raw_metadata,
-    Column("order_id", String, nullable=True),
-    Column("order_item_id", Integer, nullable=True),
+    Column("order_date", Date, nullable=True),
+    Column("ship_date", Date, nullable=True),
+    Column("ship_mode", String, nullable=True),
+    Column("state", String, nullable=True),
+    Column("postal_code", String, nullable=True),
     Column("product_id", String, nullable=True),
-    Column("seller_id", String, nullable=True),
-    Column("shipping_limit_date", DateTime, nullable=True),
-    Column("price", Numeric, nullable=True),
-    Column("freight_value", Numeric, nullable=True),
+    Column("sub_category", String, nullable=True),
+    Column("product_name", String, nullable=True),
+    Column("quantity", Integer, nullable=True),
+    Column("discount", Numeric, nullable=True),
+    Column("profit", Numeric, nullable=True),
 )
 
-products = Table(
-    "products",
-    raw_metadata,
-    Column("product_id", String, nullable=True),
-    Column("product_category_name", String, nullable=True),
-    Column("product_name_lenght", Numeric, nullable=True),
-    Column("product_description_lenght", Numeric, nullable=True),
-    Column("product_photos_qty", Numeric, nullable=True),
-    Column("product_weight_g", Numeric, nullable=True),
-    Column("product_length_cm", Numeric, nullable=True),
-    Column("product_height_cm", Numeric, nullable=True),
-    Column("product_width_cm", Numeric, nullable=True),
-)
-
-sellers = Table(
-    "sellers",
-    raw_metadata,
-    Column("seller_id", String, nullable=True),
-    Column("seller_zip_code_prefix", String, nullable=True),
-    Column("seller_city", String, nullable=True),
-    Column("seller_state", String, nullable=True),
-)
-
-order_payments = Table(
-    "order_payments",
-    raw_metadata,
-    Column("order_id", String, nullable=True),
-    Column("payment_sequential", Integer, nullable=True),
-    Column("payment_type", String, nullable=True),
-    Column("payment_installments", Integer, nullable=True),
-    Column("payment_value", Numeric, nullable=True),
-)
-
-order_reviews = Table(
-    "order_reviews",
-    raw_metadata,
-    Column("review_id", String, nullable=True),
-    Column("order_id", String, nullable=True),
-    Column("review_score", Integer, nullable=True),
-    Column("review_comment_title", Text, nullable=True),
-    Column("review_comment_message", Text, nullable=True),
-    Column("review_creation_date", DateTime, nullable=True),
-    Column("review_answer_timestamp", DateTime, nullable=True),
-)
-
-geolocation = Table(
-    "geolocation",
-    raw_metadata,
-    Column("geolocation_zip_code_prefix", String, nullable=True),
-    Column("geolocation_lat", Numeric, nullable=True),
-    Column("geolocation_lng", Numeric, nullable=True),
-    Column("geolocation_city", String, nullable=True),
-    Column("geolocation_state", String, nullable=True),
-)
-
-product_category_translation = Table(
-    "product_category_translation",
-    raw_metadata,
-    Column("product_category_name", String, nullable=True),
-    Column("product_category_name_english", String, nullable=True),
-)
-
-RAW_TABLES = {
-    table.name: table
-    for table in (
-        customers,
-        orders,
-        order_items,
-        products,
-        sellers,
-        order_payments,
-        order_reviews,
-        geolocation,
-        product_category_translation,
-    )
-}
+RAW_TABLES = {store_transactions.name: store_transactions}

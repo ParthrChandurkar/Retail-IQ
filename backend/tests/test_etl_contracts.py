@@ -1,19 +1,21 @@
-"""Unit tests for Phase 2 dataset and schema contracts."""
+"""Unit tests for the M1 Indian Store Data contracts."""
 
-from datetime import datetime
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
-from app.etl.constants import DATASETS
+from app.etl.constants import DATASETS, SOURCE_HEADERS
 from app.etl.download_data import missing_files
 from app.etl.ingest import convert_value
-from app.models.curated import Order, OrderItem, PaymentDetail, Review
+from app.models.curated import Order, StateGeocode, StateRegionReference
 
 
-def test_dataset_contract_contains_exactly_nine_files() -> None:
-    assert len(DATASETS) == 9
-    assert len({spec.filename for spec in DATASETS}) == 9
-    assert len({spec.table_name for spec in DATASETS}) == 9
+def test_dataset_contract_contains_the_verified_single_file() -> None:
+    assert len(DATASETS) == 1
+    assert DATASETS[0].filename == "store_sales_data (2).csv"
+    assert DATASETS[0].table_name == "store_transactions"
+    assert len(SOURCE_HEADERS) == 25
+    assert SOURCE_HEADERS[20] == "Sub-Category"
 
 
 def test_manual_dataset_placement_is_detected(tmp_path: Path) -> None:
@@ -29,18 +31,21 @@ def test_raw_value_conversion_preserves_typed_values() -> None:
     assert convert_value("abc", "string") == "abc"
     assert convert_value("3", "integer") == 3
     assert convert_value("13.42", "numeric") == Decimal("13.42")
-    assert convert_value("2018-01-02 03:04:05", "timestamp") == datetime(
-        2018, 1, 2, 3, 4, 5
-    )
+    assert convert_value("2023-12-31", "date") == date(2023, 12, 31)
 
 
-def test_review_uses_approved_composite_primary_key() -> None:
-    primary_key_columns = {column.name for column in Review.__table__.primary_key}
-    assert primary_key_columns == {"review_id", "order_id"}
+def test_single_line_order_contract_has_no_order_item_model() -> None:
+    assert "quantity" in Order.__table__.c
+    assert "sales" in Order.__table__.c
+    assert "profit" in Order.__table__.c
 
 
 def test_outlier_flag_contract_is_reflected_in_models() -> None:
-    assert Order.__table__.c.is_delivery_days_outlier.nullable is True
-    assert OrderItem.__table__.c.is_price_outlier.nullable is False
-    assert OrderItem.__table__.c.is_freight_value_outlier.nullable is False
-    assert PaymentDetail.__table__.c.is_payment_value_outlier.nullable is False
+    assert Order.__table__.c.is_sales_outlier.nullable is False
+    assert Order.__table__.c.is_profit_outlier.nullable is False
+    assert Order.__table__.c.is_delayed_shipment.nullable is True
+
+
+def test_geographic_reference_separates_coordinates_and_regions() -> None:
+    assert "region" not in StateGeocode.__table__.c
+    assert "region" in StateRegionReference.__table__.c

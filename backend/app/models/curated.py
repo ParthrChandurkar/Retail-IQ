@@ -1,19 +1,18 @@
-"""SQLAlchemy models for cleaned business entities and Phase 5 placeholders."""
+"""SQLAlchemy models for Indian Store Data entities and platform tables."""
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
     JSON,
     Boolean,
-    CheckConstraint,
+    Date,
     DateTime,
     Float,
     ForeignKey,
     Index,
     Integer,
     Numeric,
-    SmallInteger,
     String,
     Text,
     text,
@@ -24,165 +23,90 @@ from app.models.base import Base
 
 
 class Customer(Base):
-    """Order-linkage customer record at customer_id grain."""
+    """One source customer at the empirically verified Customer ID grain."""
 
     __tablename__ = "customers"
     __table_args__ = (
-        Index("ix_customers_unique_id", "customer_unique_id"),
+        Index("ix_customers_state", "state"),
+        Index("ix_customers_segment", "segment"),
         {"schema": "curated"},
     )
-
     customer_id: Mapped[str] = mapped_column(String, primary_key=True)
-    customer_unique_id: Mapped[str] = mapped_column(String, nullable=False)
-    zip_code_prefix: Mapped[str | None] = mapped_column(String)
-    city: Mapped[str | None] = mapped_column(String)
-    state: Mapped[str | None] = mapped_column(String(2))
-    latitude: Mapped[float | None] = mapped_column(Float)
-    longitude: Mapped[float | None] = mapped_column(Float)
+    first_name: Mapped[str | None] = mapped_column(String)
+    last_name: Mapped[str | None] = mapped_column(String)
+    segment: Mapped[str] = mapped_column(String, nullable=False)
+    postal_code: Mapped[str | None] = mapped_column(String)
+    city_type: Mapped[str] = mapped_column(String, nullable=False)
+    region_as_reported: Mapped[str] = mapped_column(String, nullable=False)
+    state: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class Product(Base):
+    __tablename__ = "products"
+    __table_args__ = (
+        Index("ix_products_category", "category", "sub_category"),
+        {"schema": "curated"},
+    )
+    product_id: Mapped[str] = mapped_column(String, primary_key=True)
+    product_name: Mapped[str | None] = mapped_column(String)
+    category: Mapped[str] = mapped_column(String, nullable=False)
+    sub_category: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class Order(Base):
-    """Cleaned order record."""
+    """Complete single-line order; Order ID never repeats in the source."""
 
     __tablename__ = "orders"
     __table_args__ = (
         Index("ix_orders_customer", "customer_id"),
-        Index("ix_orders_purchase_ts", "purchase_ts"),
-        Index("ix_orders_status", "order_status"),
+        Index("ix_orders_order_date", "order_date"),
+        Index("ix_orders_product", "product_id"),
         {"schema": "curated"},
     )
-
     order_id: Mapped[str] = mapped_column(String, primary_key=True)
     customer_id: Mapped[str] = mapped_column(
         ForeignKey("curated.customers.customer_id"), nullable=False
     )
-    order_status: Mapped[str] = mapped_column(String, nullable=False)
-    purchase_ts: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    approved_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    delivered_carrier_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    delivered_customer_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    estimated_delivery_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    is_late: Mapped[bool | None] = mapped_column(Boolean)
-    delivery_days: Mapped[int | None] = mapped_column(Integer)
-    delivery_delay_days: Mapped[int | None] = mapped_column(Integer)
-    is_delivery_days_outlier: Mapped[bool | None] = mapped_column(Boolean)
-
-
-class Product(Base):
-    """Cleaned product record."""
-
-    __tablename__ = "products"
-    __table_args__ = {"schema": "curated"}
-
-    product_id: Mapped[str] = mapped_column(String, primary_key=True)
-    category_name: Mapped[str | None] = mapped_column(String)
-    category_name_english: Mapped[str | None] = mapped_column(String)
-    weight_g: Mapped[Decimal | None] = mapped_column(Numeric)
-    length_cm: Mapped[Decimal | None] = mapped_column(Numeric)
-    height_cm: Mapped[Decimal | None] = mapped_column(Numeric)
-    width_cm: Mapped[Decimal | None] = mapped_column(Numeric)
-
-
-class Seller(Base):
-    """Cleaned seller record."""
-
-    __tablename__ = "sellers"
-    __table_args__ = {"schema": "curated"}
-
-    seller_id: Mapped[str] = mapped_column(String, primary_key=True)
-    zip_code_prefix: Mapped[str | None] = mapped_column(String)
-    city: Mapped[str | None] = mapped_column(String)
-    state: Mapped[str | None] = mapped_column(String(2))
-    latitude: Mapped[float | None] = mapped_column(Float)
-    longitude: Mapped[float | None] = mapped_column(Float)
-
-
-class OrderItem(Base):
-    """Cleaned order-item record."""
-
-    __tablename__ = "order_items"
-    __table_args__ = {"schema": "curated"}
-
-    order_id: Mapped[str] = mapped_column(
-        ForeignKey("curated.orders.order_id"), primary_key=True
-    )
-    order_item_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     product_id: Mapped[str] = mapped_column(
         ForeignKey("curated.products.product_id"), nullable=False
     )
-    seller_id: Mapped[str] = mapped_column(
-        ForeignKey("curated.sellers.seller_id"), nullable=False
-    )
-    shipping_limit_date: Mapped[datetime | None] = mapped_column(DateTime)
-    price: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    freight_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    is_price_outlier: Mapped[bool] = mapped_column(
+    order_date: Mapped[date] = mapped_column(Date, nullable=False)
+    ship_date: Mapped[date | None] = mapped_column(Date)
+    ship_mode: Mapped[str | None] = mapped_column(String)
+    shipping_days: Mapped[int | None] = mapped_column(Integer)
+    is_delayed_shipment: Mapped[bool | None] = mapped_column(Boolean)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    sales: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    is_sales_outlier: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )
-    is_freight_value_outlier: Mapped[bool] = mapped_column(
+    is_profit_outlier: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )
 
 
-class PaymentDetail(Base):
-    """Cleaned payment record at source payment grain."""
-
-    __tablename__ = "payment_details"
+class StateGeocode(Base):
+    __tablename__ = "state_geocode"
     __table_args__ = {"schema": "curated"}
-
-    order_id: Mapped[str] = mapped_column(
-        ForeignKey("curated.orders.order_id"), primary_key=True
-    )
-    payment_sequential: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payment_type: Mapped[str] = mapped_column(String, nullable=False)
-    payment_installments: Mapped[int | None] = mapped_column(Integer)
-    payment_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    is_payment_value_outlier: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default=text("false")
-    )
+    state: Mapped[str] = mapped_column(String, primary_key=True)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
 
-class PaymentSummary(Base):
-    """Derived order-level payment summary."""
-
-    __tablename__ = "payment_summary"
+class StateRegionReference(Base):
+    __tablename__ = "state_region_reference"
     __table_args__ = {"schema": "curated"}
-
-    order_id: Mapped[str] = mapped_column(
-        ForeignKey("curated.orders.order_id"), primary_key=True
+    state: Mapped[str] = mapped_column(
+        ForeignKey("curated.state_geocode.state"), primary_key=True
     )
-    primary_payment_type: Mapped[str | None] = mapped_column(String)
-    installments_max: Mapped[int | None] = mapped_column(Integer)
-    total_payment_value: Mapped[Decimal | None] = mapped_column(Numeric)
-
-
-class Review(Base):
-    """Cleaned review-order link preserving the source composite grain."""
-
-    __tablename__ = "reviews"
-    __table_args__ = (
-        CheckConstraint("review_score BETWEEN 1 AND 5", name="ck_review_score"),
-        Index("ix_reviews_review_id", "review_id"),
-        {"schema": "curated"},
-    )
-
-    review_id: Mapped[str] = mapped_column(String, primary_key=True)
-    order_id: Mapped[str] = mapped_column(
-        ForeignKey("curated.orders.order_id"), primary_key=True
-    )
-    review_score: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    comment_title: Mapped[str | None] = mapped_column(Text)
-    comment_message: Mapped[str | None] = mapped_column(Text)
-    review_creation_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    review_answer_ts: Mapped[datetime | None] = mapped_column(DateTime)
+    region: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class User(Base):
-    """Empty Phase 5 authentication user table."""
-
     __tablename__ = "users"
     __table_args__ = {"schema": "curated"}
-
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
@@ -199,11 +123,8 @@ class User(Base):
 
 
 class RefreshToken(Base):
-    """Empty Phase 5 refresh-token table."""
-
     __tablename__ = "refresh_tokens"
     __table_args__ = {"schema": "curated"}
-
     token_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
         ForeignKey("curated.users.user_id"), nullable=False
@@ -217,11 +138,8 @@ class RefreshToken(Base):
 
 
 class AdminSetting(Base):
-    """Empty Phase 5 administration settings table."""
-
     __tablename__ = "admin_settings"
     __table_args__ = {"schema": "curated"}
-
     key: Mapped[str] = mapped_column(String, primary_key=True)
     value: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -230,11 +148,8 @@ class AdminSetting(Base):
 
 
 class DataRefreshLog(Base):
-    """Execution audit record for ETL and later batch jobs."""
-
     __tablename__ = "data_refresh_log"
     __table_args__ = {"schema": "curated"}
-
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     job_name: Mapped[str] = mapped_column(String, nullable=False)
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

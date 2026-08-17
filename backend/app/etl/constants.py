@@ -1,9 +1,9 @@
-"""Dataset contracts shared by acquisition, ingestion, and reporting."""
+"""Indian Store Data source contract shared by acquisition and ETL."""
 
 from dataclasses import dataclass
 from typing import Literal
 
-ColumnKind = Literal["string", "integer", "numeric", "timestamp"]
+ColumnKind = Literal["string", "integer", "numeric", "date"]
 
 
 @dataclass(frozen=True)
@@ -17,131 +17,67 @@ class DatasetSpec:
     grain: tuple[str, ...]
 
 
-DATASETS: tuple[DatasetSpec, ...] = (
-    DatasetSpec(
-        "olist_customers_dataset.csv",
-        "customers",
-        (
-            ("customer_id", "string"),
-            ("customer_unique_id", "string"),
-            ("customer_zip_code_prefix", "string"),
-            ("customer_city", "string"),
-            ("customer_state", "string"),
-        ),
-        99_000,
-        ("customer_id",),
+STORE_TRANSACTIONS = DatasetSpec(
+    "store_sales_data (2).csv",
+    "store_transactions",
+    (
+        ("customer_id", "string"),
+        ("customer_name", "string"),
+        ("last_name", "string"),
+        ("date_of_birth", "date"),
+        ("sales", "numeric"),
+        ("year", "integer"),
+        ("outlet_type", "string"),
+        ("city_type", "string"),
+        ("category_of_goods", "string"),
+        ("region", "string"),
+        ("country", "string"),
+        ("segment", "string"),
+        ("sales_date", "date"),
+        ("order_id", "string"),
+        ("order_date", "date"),
+        ("ship_date", "date"),
+        ("ship_mode", "string"),
+        ("state", "string"),
+        ("postal_code", "string"),
+        ("product_id", "string"),
+        ("sub_category", "string"),
+        ("product_name", "string"),
+        ("quantity", "integer"),
+        ("discount", "numeric"),
+        ("profit", "numeric"),
     ),
-    DatasetSpec(
-        "olist_orders_dataset.csv",
-        "orders",
-        (
-            ("order_id", "string"),
-            ("customer_id", "string"),
-            ("order_status", "string"),
-            ("order_purchase_timestamp", "timestamp"),
-            ("order_approved_at", "timestamp"),
-            ("order_delivered_carrier_date", "timestamp"),
-            ("order_delivered_customer_date", "timestamp"),
-            ("order_estimated_delivery_date", "timestamp"),
-        ),
-        99_000,
-        ("order_id",),
-    ),
-    DatasetSpec(
-        "olist_order_items_dataset.csv",
-        "order_items",
-        (
-            ("order_id", "string"),
-            ("order_item_id", "integer"),
-            ("product_id", "string"),
-            ("seller_id", "string"),
-            ("shipping_limit_date", "timestamp"),
-            ("price", "numeric"),
-            ("freight_value", "numeric"),
-        ),
-        112_000,
-        ("order_id", "order_item_id"),
-    ),
-    DatasetSpec(
-        "olist_products_dataset.csv",
-        "products",
-        (
-            ("product_id", "string"),
-            ("product_category_name", "string"),
-            ("product_name_lenght", "numeric"),
-            ("product_description_lenght", "numeric"),
-            ("product_photos_qty", "numeric"),
-            ("product_weight_g", "numeric"),
-            ("product_length_cm", "numeric"),
-            ("product_height_cm", "numeric"),
-            ("product_width_cm", "numeric"),
-        ),
-        33_000,
-        ("product_id",),
-    ),
-    DatasetSpec(
-        "olist_sellers_dataset.csv",
-        "sellers",
-        (
-            ("seller_id", "string"),
-            ("seller_zip_code_prefix", "string"),
-            ("seller_city", "string"),
-            ("seller_state", "string"),
-        ),
-        3_000,
-        ("seller_id",),
-    ),
-    DatasetSpec(
-        "olist_order_payments_dataset.csv",
-        "order_payments",
-        (
-            ("order_id", "string"),
-            ("payment_sequential", "integer"),
-            ("payment_type", "string"),
-            ("payment_installments", "integer"),
-            ("payment_value", "numeric"),
-        ),
-        104_000,
-        ("order_id", "payment_sequential"),
-    ),
-    DatasetSpec(
-        "olist_order_reviews_dataset.csv",
-        "order_reviews",
-        (
-            ("review_id", "string"),
-            ("order_id", "string"),
-            ("review_score", "integer"),
-            ("review_comment_title", "string"),
-            ("review_comment_message", "string"),
-            ("review_creation_date", "timestamp"),
-            ("review_answer_timestamp", "timestamp"),
-        ),
-        99_000,
-        ("review_id", "order_id"),
-    ),
-    DatasetSpec(
-        "olist_geolocation_dataset.csv",
-        "geolocation",
-        (
-            ("geolocation_zip_code_prefix", "string"),
-            ("geolocation_lat", "numeric"),
-            ("geolocation_lng", "numeric"),
-            ("geolocation_city", "string"),
-            ("geolocation_state", "string"),
-        ),
-        1_000_000,
-        (),
-    ),
-    DatasetSpec(
-        "product_category_name_translation.csv",
-        "product_category_translation",
-        (
-            ("product_category_name", "string"),
-            ("product_category_name_english", "string"),
-        ),
-        71,
-        ("product_category_name",),
-    ),
+    100_000,
+    ("order_id",),
 )
 
-DATASETS_BY_TABLE = {dataset.table_name: dataset for dataset in DATASETS}
+SOURCE_HEADERS = (
+    "Customer ID",
+    "Customer Name",
+    "Last Name",
+    "Date of Birth",
+    "Sales",
+    "Year",
+    "Outlet Type",
+    "City Type",
+    "Category of Goods",
+    "Region",
+    "Country",
+    "Segment",
+    "Sales Date",
+    "Order ID",
+    "Order Date",
+    "Ship Date",
+    "Ship Mode",
+    "State",
+    "Postal Code",
+    "Product ID",
+    "Sub-Category",
+    "Product Name",
+    "Quantity",
+    "Discount",
+    "Profit",
+)
+
+DATASETS: tuple[DatasetSpec, ...] = (STORE_TRANSACTIONS,)
+DATASETS_BY_TABLE = {STORE_TRANSACTIONS.table_name: STORE_TRANSACTIONS}
