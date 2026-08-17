@@ -1,112 +1,86 @@
 # Data Quality Report — Pre-Clean
 
-- **Generated at:** `2026-08-06T04:42:34.316713+00:00`
-- **Code/commit reference:** `aa84a065ffa36b58a3f8f8b2b8523d7dad07a45c`
-- **Dataset row counts used:** customers=99,441, orders=99,441, order_items=112,650, products=32,951, sellers=3,095, order_payments=103,886, order_reviews=99,224, geolocation=1,000,163, product_category_translation=71
+- **Generated at:** `2026-08-17T11:47:59.905039+00:00`
+- **Code/commit reference:** `9188d9f04f1c2c841a2137513ef5010425d46950`
+- **Dataset row counts used:** store_transactions=100,000
 
-## Source row counts
+## Source structure
 
-| Raw table | Actual rows | SRS approximate rows | Difference |
-|---|---:|---:|---:|
-| `raw.customers` | 99,441 | 99,000 | +441 |
-| `raw.orders` | 99,441 | 99,000 | +441 |
-| `raw.order_items` | 112,650 | 112,000 | +650 |
-| `raw.products` | 32,951 | 33,000 | -49 |
-| `raw.sellers` | 3,095 | 3,000 | +95 |
-| `raw.order_payments` | 103,886 | 104,000 | -114 |
-| `raw.order_reviews` | 99,224 | 99,000 | +224 |
-| `raw.geolocation` | 1,000,163 | 1,000,000 | +163 |
-| `raw.product_category_translation` | 71 | 71 | +0 |
+| Check | Result |
+|---|---:|
+| Rows | 100,000 |
+| Columns | 25 |
+| Advertised columns | 20–21 |
+| Actual 21st column | `Sub-Category` |
+| Exact duplicate rows | 0 |
+
+## Empirical grain verification
+
+| Question | Result |
+|---|---|
+| Repeated Order IDs | **No** (0 duplicate rows) |
+| Repeated Customer IDs | **No** (0 duplicate rows) |
+| Multi-item orders | **0**; each order occupies exactly one source row |
+| Repeat customers | **0 / 100,000 (0.0000%)** |
+
+## Date coverage
+
+| Field | Minimum | Maximum | Nulls |
+|---|---|---|---:|
+| Order Date | 2019-01-01 | 2023-12-31 | 0 |
+| Ship Date | 2019-01-02 | 2024-01-07 | 0 |
+| Sales Date | 2019-01-01 | 2023-12-31 | 0 |
 
 ## Column null rates
 
 | Column | Null count | Null percentage |
 |---|---:|---:|
-| `raw.customers.customer_id` | 0 | 0.0000% |
-| `raw.customers.customer_unique_id` | 0 | 0.0000% |
-| `raw.customers.customer_zip_code_prefix` | 0 | 0.0000% |
-| `raw.customers.customer_city` | 0 | 0.0000% |
-| `raw.customers.customer_state` | 0 | 0.0000% |
-| `raw.orders.order_id` | 0 | 0.0000% |
-| `raw.orders.customer_id` | 0 | 0.0000% |
-| `raw.orders.order_status` | 0 | 0.0000% |
-| `raw.orders.order_purchase_timestamp` | 0 | 0.0000% |
-| `raw.orders.order_approved_at` | 160 | 0.1609% |
-| `raw.orders.order_delivered_carrier_date` | 1,783 | 1.7930% |
-| `raw.orders.order_delivered_customer_date` | 2,965 | 2.9817% |
-| `raw.orders.order_estimated_delivery_date` | 0 | 0.0000% |
-| `raw.order_items.order_id` | 0 | 0.0000% |
-| `raw.order_items.order_item_id` | 0 | 0.0000% |
-| `raw.order_items.product_id` | 0 | 0.0000% |
-| `raw.order_items.seller_id` | 0 | 0.0000% |
-| `raw.order_items.shipping_limit_date` | 0 | 0.0000% |
-| `raw.order_items.price` | 0 | 0.0000% |
-| `raw.order_items.freight_value` | 0 | 0.0000% |
-| `raw.products.product_id` | 0 | 0.0000% |
-| `raw.products.product_category_name` | 610 | 1.8512% |
-| `raw.products.product_name_lenght` | 610 | 1.8512% |
-| `raw.products.product_description_lenght` | 610 | 1.8512% |
-| `raw.products.product_photos_qty` | 610 | 1.8512% |
-| `raw.products.product_weight_g` | 2 | 0.0061% |
-| `raw.products.product_length_cm` | 2 | 0.0061% |
-| `raw.products.product_height_cm` | 2 | 0.0061% |
-| `raw.products.product_width_cm` | 2 | 0.0061% |
-| `raw.sellers.seller_id` | 0 | 0.0000% |
-| `raw.sellers.seller_zip_code_prefix` | 0 | 0.0000% |
-| `raw.sellers.seller_city` | 0 | 0.0000% |
-| `raw.sellers.seller_state` | 0 | 0.0000% |
-| `raw.order_payments.order_id` | 0 | 0.0000% |
-| `raw.order_payments.payment_sequential` | 0 | 0.0000% |
-| `raw.order_payments.payment_type` | 0 | 0.0000% |
-| `raw.order_payments.payment_installments` | 0 | 0.0000% |
-| `raw.order_payments.payment_value` | 0 | 0.0000% |
-| `raw.order_reviews.review_id` | 0 | 0.0000% |
-| `raw.order_reviews.order_id` | 0 | 0.0000% |
-| `raw.order_reviews.review_score` | 0 | 0.0000% |
-| `raw.order_reviews.review_comment_title` | 87,656 | 88.3415% |
-| `raw.order_reviews.review_comment_message` | 58,247 | 58.7025% |
-| `raw.order_reviews.review_creation_date` | 0 | 0.0000% |
-| `raw.order_reviews.review_answer_timestamp` | 0 | 0.0000% |
-| `raw.geolocation.geolocation_zip_code_prefix` | 0 | 0.0000% |
-| `raw.geolocation.geolocation_lat` | 0 | 0.0000% |
-| `raw.geolocation.geolocation_lng` | 0 | 0.0000% |
-| `raw.geolocation.geolocation_city` | 0 | 0.0000% |
-| `raw.geolocation.geolocation_state` | 0 | 0.0000% |
-| `raw.product_category_translation.product_category_name` | 0 | 0.0000% |
-| `raw.product_category_translation.product_category_name_english` | 0 | 0.0000% |
+| `raw.store_transactions.customer_id` | 0 | 0.0000% |
+| `raw.store_transactions.customer_name` | 0 | 0.0000% |
+| `raw.store_transactions.last_name` | 0 | 0.0000% |
+| `raw.store_transactions.date_of_birth` | 0 | 0.0000% |
+| `raw.store_transactions.sales` | 0 | 0.0000% |
+| `raw.store_transactions.year` | 0 | 0.0000% |
+| `raw.store_transactions.outlet_type` | 0 | 0.0000% |
+| `raw.store_transactions.city_type` | 0 | 0.0000% |
+| `raw.store_transactions.category_of_goods` | 0 | 0.0000% |
+| `raw.store_transactions.region` | 0 | 0.0000% |
+| `raw.store_transactions.country` | 0 | 0.0000% |
+| `raw.store_transactions.segment` | 0 | 0.0000% |
+| `raw.store_transactions.sales_date` | 0 | 0.0000% |
+| `raw.store_transactions.order_id` | 0 | 0.0000% |
+| `raw.store_transactions.order_date` | 0 | 0.0000% |
+| `raw.store_transactions.ship_date` | 0 | 0.0000% |
+| `raw.store_transactions.ship_mode` | 0 | 0.0000% |
+| `raw.store_transactions.state` | 0 | 0.0000% |
+| `raw.store_transactions.postal_code` | 0 | 0.0000% |
+| `raw.store_transactions.product_id` | 0 | 0.0000% |
+| `raw.store_transactions.sub_category` | 0 | 0.0000% |
+| `raw.store_transactions.product_name` | 0 | 0.0000% |
+| `raw.store_transactions.quantity` | 0 | 0.0000% |
+| `raw.store_transactions.discount` | 0 | 0.0000% |
+| `raw.store_transactions.profit` | 0 | 0.0000% |
 
-## Duplicate rates at declared grain
+## Financial semantics
 
-| Raw table | Declared grain | Duplicate extra rows |
-|---|---|---:|
-| `raw.customers` | customer_id | 0 |
-| `raw.orders` | order_id | 0 |
-| `raw.order_items` | order_id, order_item_id | 0 |
-| `raw.products` | product_id | 0 |
-| `raw.sellers` | seller_id | 0 |
-| `raw.order_payments` | order_id, payment_sequential | 0 |
-| `raw.order_reviews` | review_id, order_id | 0 |
-| `raw.geolocation` | source has no unique grain | 0 |
-| `raw.product_category_translation` | product_category_name | 0 |
+Kaggle defines `Sales` as the purchase amount in INR and `Profit` as profit calculated after applying discount. Since every Order ID has exactly one row, both values are complete transaction-line amounts; `Sales` is not a unit price and `Profit` requires no aggregation or recomputation before curation.
 
-## Referential-integrity risks
-
-| Relationship | Orphan rows |
-|---|---:|
-| orders.customer_id → customers.customer_id | 0 |
-| order_items.order_id → orders.order_id | 0 |
-| order_items.product_id → products.product_id | 0 |
-| order_items.seller_id → sellers.seller_id | 0 |
-| order_payments.order_id → orders.order_id | 0 |
-| order_reviews.order_id → orders.order_id | 0 |
+- Quantity/Sales correlation: **-0.002201**; Sales was generated independently of quantity, so a unit price cannot be recovered by treating Sales as price-per-unit.
+- Quantity range: **1–10**.
+- Discount range: **0.00–0.50** in the source (0%–50%).
+- Ship Date null rate: **0.0000%**.
+- Discount null rate: **0.0000%**.
+- Profit null rate: **0.0000%**.
 
 ## Global Tukey outlier candidates
 
-These are diagnostic flags only. No source row is deleted.
+Outliers are candidates for flags only and are not deleted.
 
 | Field | Q1 | Q3 | IQR | Lower | Upper | Flagged | Flagged % |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| `price` | 39.9000 | 134.9000 | 95.0000 | -102.6000 | 277.4000 | 8,427 | 7.4807% |
-| `freight_value` | 13.0800 | 21.1500 | 8.0700 | 0.9750 | 33.2550 | 12,134 | 10.7714% |
-| `payment_value` | 56.7900 | 171.8375 | 115.0475 | -115.7813 | 344.4088 | 7,981 | 7.6825% |
-| `delivery_days` | 6.0000 | 15.0000 | 9.0000 | -7.5000 | 28.5000 | 5,025 | 5.2085% |
+| `sales` | 12618.0300 | 37575.8500 | 24957.8200 | -24818.7000 | 75012.5800 | 0 | 0.0000% |
+| `profit` | 1651.1050 | 5363.8450 | 3712.7400 | -3918.0050 | 10932.9550 | 1,213 | 1.2130% |
+
+## Geographic integrity anomaly
+
+All **10 of 10 states** occur under all **4** reported regions. `State → Region` is therefore not a valid dependency. The raw value must be preserved only as `region_as_reported`, not interpreted as geography.

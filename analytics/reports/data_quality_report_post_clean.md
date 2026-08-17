@@ -1,88 +1,65 @@
 # Data Quality Report — Post-Clean
 
-- **Generated at:** `2026-08-06T04:42:43.136585+00:00`
-- **Code/commit reference:** `aa84a065ffa36b58a3f8f8b2b8523d7dad07a45c`
-- **Dataset row counts used:** customers=99,441, orders=99,441, order_items=112,650, products=32,951, sellers=3,095, order_payments=103,886, order_reviews=99,224, geolocation=1,000,163, product_category_translation=71
+- **Generated at:** `2026-08-17T11:48:27.696004+00:00`
+- **Code/commit reference:** `9188d9f04f1c2c841a2137513ef5010425d46950`
+- **Dataset row counts used:** store_transactions=100,000
 
 ## Curated row counts
 
 | Curated table | Rows |
 |---|---:|
-| `curated.customers` | 99,441 |
-| `curated.orders` | 99,441 |
-| `curated.order_items` | 112,650 |
-| `curated.products` | 32,951 |
-| `curated.sellers` | 3,095 |
-| `curated.payment_details` | 103,886 |
-| `curated.payment_summary` | 99,440 |
-| `curated.reviews` | 99,224 |
+| `curated.customers` | 100,000 |
+| `curated.products` | 100,000 |
+| `curated.orders` | 100,000 |
+| `curated.state_geocode` | 10 |
+| `curated.state_region_reference` | 10 |
 | `curated.users` | 0 |
 | `curated.refresh_tokens` | 0 |
 | `curated.admin_settings` | 0 |
-| `curated.data_refresh_log` | 9 |
+| `curated.data_refresh_log` | 17 |
 
 ## Cleaning diff
 
 | Source → curated | Raw rows | Curated rows | Rows removed | Rationale |
 |---|---:|---:|---:|---|
-| `raw.customers` → `curated.customers` | 99,441 | 99,441 | 0 | required-key validation and grain deduplication |
-| `raw.orders` → `curated.orders` | 99,441 | 99,441 | 0 | required fields, valid customer FK, timestamp ordering |
-| `raw.order_items` → `curated.order_items` | 112,650 | 112,650 | 0 | required fields, non-negative values, valid FKs |
-| `raw.products` → `curated.products` | 32,951 | 32,951 | 0 | required product_id and grain deduplication |
-| `raw.sellers` → `curated.sellers` | 3,095 | 3,095 | 0 | required seller_id and grain deduplication |
-| `raw.order_payments` → `curated.payment_details` | 103,886 | 103,886 | 0 | required fields, non-negative values, valid order FK |
-| `raw.order_reviews` → `curated.reviews` | 99,224 | 99,224 | 0 | composite grain, score range, valid order FK |
-| payment detail → `curated.payment_summary` | 103,886 | 99,440 | 4,446 | aggregated to one row per order |
+| source → `customers` | 100,000 | 100,000 | 0 | required fields + Customer ID deduplication |
+| source → `products` | 100,000 | 100,000 | 0 | required fields + Product ID deduplication |
+| source → `orders` | 100,000 | 100,000 | 0 | valid dates/financials/FKs + Order ID deduplication |
 
 ### Invalid-data handling
 
-Invalid rows are excluded only when they violate the binding curated contract. Optional nulls are retained.
-
-| Invalid category | Rows detected | Rows dropped | Values corrected |
+| Category | Rows detected | Rows dropped | Values corrected |
 |---|---:|---:|---:|
-| Customers missing required identifiers | 0 | 0 | 0 |
-| Orders missing required fields | 0 | 0 | 0 |
-| Orders with delivery before purchase | 0 | 0 | 0 |
-| Order items with missing required fields or negative values | 0 | 0 | 0 |
-| Payments with missing required fields or impossible values | 0 | 0 | 0 |
-| Reviews with missing required fields or invalid score | 0 | 0 | 0 |
+| Invalid customer fields | 0 | 0 | 0 |
+| Invalid product fields | 0 | 0 | 0 |
+| Invalid order fields or impossible values | 0 | 0 | 0 |
+| Discount scale normalization | 100,000 | 0 | 100,000 |
+
+Discount values were converted from source fractions (`0.00–0.50`) to percentage points (`0–50`) to satisfy the curated `discount_pct` contract.
+No source value was imputed or fabricated.
 
 ### Duplicate handling
 
-| Raw table | Grain | Duplicate extra rows removed |
-|---|---|---:|
-| `raw.customers` | customer_id | 0 |
-| `raw.orders` | order_id | 0 |
-| `raw.order_items` | order_id, order_item_id | 0 |
-| `raw.products` | product_id | 0 |
-| `raw.sellers` | seller_id | 0 |
-| `raw.order_payments` | order_id, payment_sequential | 0 |
-| `raw.order_reviews` | review_id, order_id | 0 |
-| `raw.geolocation` | source has no unique grain | 0 |
-| `raw.product_category_translation` | product_category_name | 0 |
-
-### Values imputed or enriched
-
-| Category | Count | Rationale |
-|---|---:|---|
-| Source values imputed | 0 | Optional source nulls are retained; no value is fabricated. |
-| Customer ZIP prefixes without geolocation match | 278 | Coordinates remain NULL. |
-| Seller ZIP prefixes without geolocation match | 7 | Coordinates remain NULL. |
-| Matched coordinates | See curated non-null coordinates | Independent median latitude/longitude per ZIP prefix. |
-
-### Review duplicate consistency
-
-- Duplicate `review_id` groups preserved across orders: **789**
-- Groups with inconsistent score/title/message: **0**
-- Review-grain downstream analysis must use one deterministic row per `review_id`.
+| Grain | Duplicate extra rows removed |
+|---|---:|
+| Order ID | 0 |
+| Customer ID | 0 |
+| Product ID | 0 |
 
 ## Retained outlier flags
 
-All flagged rows remain in curated tables. Price/freight Q1–Q3 columns show the Phase 2 global baseline; their persisted counts use the category-conditional bounds authorized by the material Phase 3 EDA follow-up. Delivery and payment remain global.
+Legitimate outliers remain in `curated.orders`; flags are analytical indicators.
 
-| Field | Q1 | Q3 | IQR | Lower | Upper | Flagged | Flagged % | Persisted flag count |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `price` | 39.9000 | 134.9000 | 95.0000 | -102.6000 | 277.4000 | 8,427 | 7.4807% | 9,376 |
-| `freight_value` | 13.0800 | 21.1500 | 8.0700 | 0.9750 | 33.2550 | 12,134 | 10.7714% | 9,767 |
-| `payment_value` | 56.7900 | 171.8375 | 115.0475 | -115.7813 | 344.4088 | 7,981 | 7.6825% | 7,981 |
-| `delivery_days` | 6.0000 | 15.0000 | 9.0000 | -7.5000 | 28.5000 | 5,025 | 5.2085% | 5,025 |
+| Flag | Persisted rows |
+|---|---:|
+| `is_sales_outlier` | 0 |
+| `is_profit_outlier` | 1,213 |
+
+## Geographic integrity anomaly — binding v2.1 finding
+
+The source contains **10 states × 4 reported regions = 40 distinct state/region pairs**. Every state occurs in North, South, East, and West, so `region` is not geographically reliable and is preserved only as `curated.customers.region_as_reported`. It must never be labeled as real geography. Geographic consumers must join `state_region_reference` instead.
+
+## Static reference provenance
+
+- State centroids: [DataMeet India state boundaries](https://github.com/datameet/maps/tree/b3fbbde595310b397a55d718e0958ce249a4fa1f/States), CC BY 4.0; polygon centroids calculated from the pinned shapefile commit.
+- State regions: [Government of India Ministry of Housing and Urban Affairs regional classification](https://mohua.gov.in/upload/uploadfiles/files/4Empanelment_of_Resource.pdf); the 10 represented states map to North, East, West, or South under its R1–R4 groups.
