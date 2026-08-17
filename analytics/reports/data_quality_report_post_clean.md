@@ -1,7 +1,7 @@
 # Data Quality Report — Post-Clean
 
-- **Generated at:** `2026-08-17T11:48:27.696004+00:00`
-- **Code/commit reference:** `9188d9f04f1c2c841a2137513ef5010425d46950`
+- **Generated at:** `2026-08-17T11:53:32.476036+00:00`
+- **Code/commit reference:** `18eb91c50260b131d20baa6fe04d36db493fe2ee`
 - **Dataset row counts used:** store_transactions=100,000
 
 ## Curated row counts
@@ -16,7 +16,7 @@
 | `curated.users` | 0 |
 | `curated.refresh_tokens` | 0 |
 | `curated.admin_settings` | 0 |
-| `curated.data_refresh_log` | 17 |
+| `curated.data_refresh_log` | 18 |
 
 ## Cleaning diff
 
@@ -37,6 +37,10 @@
 
 Discount values were converted from source fractions (`0.00–0.50`) to percentage points (`0–50`) to satisfy the curated `discount_pct` contract.
 No source value was imputed or fabricated.
+
+### Date-field anomaly
+
+`Year` disagrees with the year of `Order Date` on **80,023 rows (80.0230%)**. `Year` and `Sales Date` remain raw-only audit fields; curated orders use the v2.0 binding `order_date` and no source date is silently overwritten.
 
 ### Duplicate handling
 

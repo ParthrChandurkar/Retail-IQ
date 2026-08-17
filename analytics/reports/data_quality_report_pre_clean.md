@@ -1,7 +1,7 @@
 # Data Quality Report — Pre-Clean
 
-- **Generated at:** `2026-08-17T11:47:59.905039+00:00`
-- **Code/commit reference:** `9188d9f04f1c2c841a2137513ef5010425d46950`
+- **Generated at:** `2026-08-17T11:53:16.517276+00:00`
+- **Code/commit reference:** `18eb91c50260b131d20baa6fe04d36db493fe2ee`
 - **Dataset row counts used:** store_transactions=100,000
 
 ## Source structure
@@ -30,6 +30,15 @@
 | Order Date | 2019-01-01 | 2023-12-31 | 0 |
 | Ship Date | 2019-01-02 | 2024-01-07 | 0 |
 | Sales Date | 2019-01-01 | 2023-12-31 | 0 |
+
+### Source date consistency
+
+| Check | Mismatched rows | Mismatch rate |
+|---|---:|---:|
+| `Year` vs Sales Date year | 79,888 | 79.8880% |
+| `Year` vs Order Date year | 80,023 | 80.0230% |
+
+The independently generated `Year` and `Sales Date` fields are retained in raw for auditability but are not used to overwrite the binding `Order Date`.
 
 ## Column null rates
 
