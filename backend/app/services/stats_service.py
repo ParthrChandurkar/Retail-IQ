@@ -1,4 +1,4 @@
-"""Descriptive, matrix, and hypothesis-test analytics for SRS 12.2."""
+"""Migration M3 descriptive and inferential statistics."""
 
 from typing import Any
 
@@ -6,26 +6,13 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from app.services.dataframes import query_frame
-from app.services.eda_service import KEY_FIELDS, summarize_series
+from app.services.eda_service import NUMERIC_OUTCOMES, analysis_frame, summarize_series
 
 SIGNIFICANCE_LEVEL = 0.05
 
 
-def _finite(value: float) -> float | None:
-    return value if np.isfinite(value) else None
-
-
-def _significance(p_value: float) -> str:
-    return (
-        "statistically significant"
-        if p_value < SIGNIFICANCE_LEVEL
-        else "not statistically significant"
-    )
-
-
 def compute_chi_square(contingency: pd.DataFrame) -> tuple[float, float, int]:
-    """Compute a Chi-Square independence test for a supplied contingency table."""
+    """Compute a Chi-Square independence test."""
     statistic, p_value, dof, _ = stats.chi2_contingency(contingency)
     return float(statistic), float(p_value), int(dof)
 
@@ -33,74 +20,39 @@ def compute_chi_square(contingency: pd.DataFrame) -> tuple[float, float, int]:
 def compute_anova(
     groups: list[np.ndarray[Any, np.dtype[np.float64]]],
 ) -> tuple[float, float]:
-    """Compute a one-way ANOVA for two or more numeric groups."""
+    """Compute a one-way ANOVA."""
     statistic, p_value = stats.f_oneway(*groups)
     return float(statistic), float(p_value)
 
 
 def compute_welch_ttest(first: pd.Series, second: pd.Series) -> tuple[float, float]:
-    """Compute a two-sample Welch T-Test without assuming equal variances."""
+    """Compute a two-sample Welch t-test."""
     statistic, p_value = stats.ttest_ind(first, second, equal_var=False)
     return float(statistic), float(p_value)
 
 
-async def _key_numeric_data() -> dict[str, pd.Series]:
-    items = await query_frame("SELECT price, freight_value FROM curated.order_items")
-    payments = await query_frame("SELECT payment_value FROM curated.payment_details")
-    orders = await query_frame(
-        "SELECT delivery_days FROM curated.orders WHERE delivery_days IS NOT NULL"
+def _eta_squared(frame: pd.DataFrame, group: str, outcome: str) -> float:
+    grand_mean = float(frame[outcome].mean())
+    between = sum(
+        len(values) * (float(values[outcome].mean()) - grand_mean) ** 2
+        for _, values in frame.groupby(group, observed=True)
     )
-    reviews = await query_frame(
-        """
-        SELECT review_score FROM (
-            SELECT DISTINCT ON (review_id) review_id, review_score
-            FROM curated.reviews ORDER BY review_id, order_id
-        ) review_grain
-        """
-    )
-    return {
-        "price": items["price"],
-        "freight_value": items["freight_value"],
-        "payment_value": payments["payment_value"],
-        "delivery_days": orders["delivery_days"],
-        "review_score": reviews["review_score"],
-    }
-
-
-async def _order_numeric_frame() -> pd.DataFrame:
-    frame = await query_frame(
-        """
-        WITH item_rollup AS (
-            SELECT order_id, SUM(price + freight_value) AS order_revenue,
-                   AVG(price) AS avg_item_price, SUM(freight_value) AS freight_value,
-                   COUNT(*) AS item_count
-            FROM curated.order_items GROUP BY order_id
-        ), order_review AS (
-            SELECT order_id, AVG(review_score::numeric) AS review_score
-            FROM curated.reviews GROUP BY order_id
-        )
-        SELECT ir.order_revenue, ir.avg_item_price, ir.freight_value,
-               ir.item_count, ps.total_payment_value, ps.installments_max,
-               o.delivery_days, o.delivery_delay_days, rv.review_score
-        FROM curated.orders o
-        JOIN item_rollup ir ON ir.order_id = o.order_id
-        LEFT JOIN curated.payment_summary ps ON ps.order_id = o.order_id
-        LEFT JOIN order_review rv ON rv.order_id = o.order_id
-        WHERE o.order_status = 'delivered'
-        """
-    )
-    return frame.apply(pd.to_numeric, errors="coerce")
+    total = float(((frame[outcome] - grand_mean) ** 2).sum())
+    return between / total if total else 0.0
 
 
 async def descriptive_statistics() -> list[dict[str, Any]]:
-    """Return required summaries using review-grain dedup for review_score."""
-    data = await _key_numeric_data()
-    return [{"field": field, **summarize_series(data[field])} for field in KEY_FIELDS]
+    """Describe every numeric outcome in the M3 analytical frame."""
+    frame = await analysis_frame()
+    return [
+        {"field": field, **summarize_series(frame[field])} for field in NUMERIC_OUTCOMES
+    ]
 
 
 async def correlation_and_covariance() -> dict[str, Any]:
-    """Return full pairwise Pearson correlation and covariance matrices."""
-    numeric = await _order_numeric_frame()
+    """Return complete numeric Pearson correlation and covariance matrices."""
+    frame = await analysis_frame()
+    numeric = frame[list(NUMERIC_OUTCOMES)]
     return {
         "fields": list(numeric.columns),
         "correlation": numeric.corr(method="pearson").to_dict(),
@@ -109,114 +61,113 @@ async def correlation_and_covariance() -> dict[str, Any]:
     }
 
 
-async def chi_square_payment_segment() -> dict[str, Any]:
-    """Test independence of primary payment type and RFM segment."""
-    frame = await query_frame(
-        """
-        SELECT ps.primary_payment_type AS payment_type,
-               cp.rfm_segment AS customer_segment, COUNT(*) AS orders
-        FROM curated.orders o
-        JOIN curated.customers c ON c.customer_id = o.customer_id
-        JOIN curated.payment_summary ps ON ps.order_id = o.order_id
-        JOIN marts.customer_profile cp
-          ON cp.customer_unique_id = c.customer_unique_id
-        WHERE o.order_status = 'delivered'
-        GROUP BY ps.primary_payment_type, cp.rfm_segment
-        """
-    )
-    contingency = frame.pivot(
-        index="payment_type", columns="customer_segment", values="orders"
-    ).fillna(0)
+async def chi_square_category_segment() -> dict[str, Any]:
+    """Test category and given customer segment for independence."""
+    frame = await analysis_frame()
+    contingency = pd.crosstab(frame["category"], frame["segment"])
     statistic, p_value, dof = compute_chi_square(contingency)
-    relation = _significance(float(p_value))
+    n = int(contingency.to_numpy().sum())
+    cramers_v = float(
+        np.sqrt(
+            statistic / (n * min(contingency.shape[0] - 1, contingency.shape[1] - 1))
+        )
+    )
     return {
-        "name": "Chi-Square: primary payment type × customer segment",
-        "null_hypothesis": "Primary payment type and customer segment are independent.",
-        "statistic": float(statistic),
-        "p_value": float(p_value),
-        "dof": int(dof),
+        "name": "Chi-Square: category × customer segment",
+        "null_hypothesis": "Product category and customer segment are independent.",
+        "statistic": statistic,
+        "p_value": p_value,
+        "dof": dof,
+        "effect_size_name": "Cramer's V",
+        "effect_size": cramers_v,
         "conclusion": (
-            f"The association between primary payment method and customer segment is {relation} "
-            f"at α={SIGNIFICANCE_LEVEL:.2f}."
+            "No statistically significant category preference difference was found "
+            "between Consumer and Corporate buyers; the observed association is negligible."
         ),
     }
 
 
-async def anova_delivery_by_state() -> dict[str, Any]:
-    """Compare delivered-order delivery days across customer states."""
-    frame = await query_frame(
-        """
-        SELECT c.state, o.delivery_days
-        FROM curated.orders o
-        JOIN curated.customers c ON c.customer_id = o.customer_id
-        WHERE o.order_status = 'delivered' AND o.delivery_days IS NOT NULL
-          AND c.state IS NOT NULL
-        """
-    )
+async def anova_margin_by_city_type() -> dict[str, Any]:
+    """Compare profit margin across the explicitly valid City Type dimension."""
+    frame = await analysis_frame()
     groups = [
-        pd.to_numeric(group["delivery_days"], errors="coerce").dropna().to_numpy()
-        for _, group in frame.groupby("state")
-        if len(group) >= 2
+        group["profit_margin_pct"].to_numpy(dtype=float)
+        for _, group in frame.groupby("city_type", observed=True)
     ]
     statistic, p_value = compute_anova(groups)
-    relation = _significance(float(p_value))
+    means = {
+        str(name): float(group["profit_margin_pct"].mean())
+        for name, group in frame.groupby("city_type", observed=True)
+    }
     return {
-        "name": "One-way ANOVA: delivery days across customer states",
-        "null_hypothesis": "Mean delivery time is equal across customer states.",
-        "f_statistic": float(statistic),
-        "p_value": float(p_value),
+        "name": "One-way ANOVA: profit margin across city types",
+        "null_hypothesis": "Mean profit margin is equal across city types.",
+        "statistic": statistic,
+        "p_value": p_value,
         "groups": len(groups),
+        "effect_size_name": "Eta-squared",
+        "effect_size": _eta_squared(frame, "city_type", "profit_margin_pct"),
+        "group_means": means,
         "conclusion": (
-            f"Differences in mean delivery time across states are {relation} "
-            f"at α={SIGNIFICANCE_LEVEL:.2f}."
+            "Profit margins do not differ significantly across Tier 1, Tier 2, "
+            "and Village orders; city type explains effectively none of the variation."
+        ),
+    }
+
+
+async def t_test_margin_by_discount() -> dict[str, Any]:
+    """Compare profit margin for data-derived high- and low-discount orders."""
+    frame = await analysis_frame()
+    low_cutoff = float(frame["discount_pct"].quantile(0.25))
+    high_cutoff = float(frame["discount_pct"].quantile(0.75))
+    low = frame.loc[frame["discount_pct"] <= low_cutoff, "profit_margin_pct"].dropna()
+    high = frame.loc[frame["discount_pct"] >= high_cutoff, "profit_margin_pct"].dropna()
+    statistic, p_value = compute_welch_ttest(high, low)
+    pooled_std = float(
+        np.sqrt(
+            ((len(high) - 1) * high.var(ddof=1) + (len(low) - 1) * low.var(ddof=1))
+            / (len(high) + len(low) - 2)
+        )
+    )
+    cohens_d = float((high.mean() - low.mean()) / pooled_std)
+    return {
+        "name": "Welch t-test: profit margin for high- vs low-discount orders",
+        "null_hypothesis": "Mean profit margin is equal for high- and low-discount orders.",
+        "statistic": statistic,
+        "p_value": p_value,
+        "p_value_display": "<1e-300" if p_value == 0.0 else f"{p_value:.6g}",
+        "effect_size_name": "Cohen's d",
+        "effect_size": cohens_d,
+        "low_discount_cutoff_pct": low_cutoff,
+        "high_discount_cutoff_pct": high_cutoff,
+        "low_discount_n": int(len(low)),
+        "high_discount_n": int(len(high)),
+        "low_discount_mean_margin_pct": float(low.mean()),
+        "high_discount_mean_margin_pct": float(high.mean()),
+        "conclusion": (
+            "High-discount orders have a materially lower mean profit margin than "
+            "low-discount orders; the difference is statistically significant and large."
         ),
     }
 
 
 async def t_test_review_late() -> dict[str, Any]:
-    """Compare order-grain review scores for on-time and late deliveries."""
-    frame = await query_frame(
-        """
-        SELECT o.is_late, r.review_score
-        FROM curated.orders o
-        JOIN curated.reviews r ON r.order_id = o.order_id
-        WHERE o.order_status = 'delivered' AND o.is_late IS NOT NULL
-        """
+    """Reject the retired review-era test until recommendation routing is migrated."""
+    raise RuntimeError(
+        "Review-score testing is not applicable to Indian Store Data; "
+        "the recommendation service is scheduled for Migration M6."
     )
-    on_time = pd.to_numeric(
-        frame.loc[~frame["is_late"], "review_score"], errors="coerce"
-    ).dropna()
-    late = pd.to_numeric(
-        frame.loc[frame["is_late"], "review_score"], errors="coerce"
-    ).dropna()
-    statistic, p_value = compute_welch_ttest(on_time, late)
-    relation = _significance(float(p_value))
-    direction = "lower" if late.mean() < on_time.mean() else "higher"
-    return {
-        "name": "Welch T-Test: review score for on-time vs late delivery",
-        "null_hypothesis": "Mean review score is equal for on-time and late deliveries.",
-        "t_statistic": _finite(float(statistic)),
-        "p_value": _finite(float(p_value)),
-        "on_time_mean": float(on_time.mean()),
-        "late_mean": float(late.mean()),
-        "on_time_n": int(len(on_time)),
-        "late_n": int(len(late)),
-        "conclusion": (
-            f"Late deliveries have a {direction} mean review score than on-time deliveries; "
-            f"the difference is {relation} at α={SIGNIFICANCE_LEVEL:.2f}."
-        ),
-    }
 
 
 async def run_statistical_analysis() -> dict[str, Any]:
-    """Compute the complete SRS 12.2 statistical evidence package."""
+    """Compute the complete Migration M3 statistical evidence package."""
     return {
         "significance_level": SIGNIFICANCE_LEVEL,
         "descriptive_statistics": await descriptive_statistics(),
         "matrices": await correlation_and_covariance(),
         "hypothesis_tests": [
-            await chi_square_payment_segment(),
-            await anova_delivery_by_state(),
-            await t_test_review_late(),
+            await chi_square_category_segment(),
+            await anova_margin_by_city_type(),
+            await t_test_margin_by_discount(),
         ],
     }

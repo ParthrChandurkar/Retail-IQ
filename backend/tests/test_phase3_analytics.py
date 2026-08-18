@@ -17,7 +17,12 @@ from app.models.marts import (
     RevenueDaily,
     ShippingPerformance,
 )
-from app.services.eda_service import summarize_series
+from app.services.eda_service import (
+    CATEGORICAL_FIELDS,
+    NUMERIC_OUTCOMES,
+    categorical_numeric_screen,
+    summarize_series,
+)
 from app.services.metrics import ELIGIBLE_ORDER_TOTALS_CTE
 from app.services.stats_service import (
     compute_anova,
@@ -34,6 +39,32 @@ def test_summary_statistics_are_computed_from_values() -> None:
     assert result["median"] == pytest.approx(2.0)
     assert result["mode"] == pytest.approx(2.0)
     assert result["variance"] == pytest.approx(1.3)
+
+
+def test_broad_screen_covers_every_categorical_numeric_pair() -> None:
+    size = 120
+    frame = pd.DataFrame(
+        {field: (["a", "b", "c"] * (size // 3)) for field in CATEGORICAL_FIELDS}
+    )
+    frame["country"] = "India"
+    for offset, field in enumerate(NUMERIC_OUTCOMES):
+        frame[field] = np.arange(size, dtype=float) + offset
+
+    result = categorical_numeric_screen(frame)
+    observed = {
+        (row["categorical_field"], row["numeric_outcome"]) for row in result["rows"]
+    }
+
+    assert len(result["rows"]) == len(CATEGORICAL_FIELDS) * len(NUMERIC_OUTCOMES)
+    assert observed == {
+        (categorical, numeric)
+        for categorical in CATEGORICAL_FIELDS
+        for numeric in NUMERIC_OUTCOMES
+    }
+    country = next(
+        row for row in result["field_summary"] if row["categorical_field"] == "country"
+    )
+    assert country["classification"] == "constant_metadata"
 
 
 def test_statistical_helpers_match_known_examples() -> None:
