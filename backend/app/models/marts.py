@@ -1,10 +1,9 @@
-"""Dashboard-facing aggregate models populated by the Phase 3 batch job."""
+"""Dashboard-facing aggregates for the Indian Store Data migration."""
 
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    BigInteger,
     CheckConstraint,
     Date,
     DateTime,
@@ -21,52 +20,41 @@ from app.models.base import Base
 
 
 class CustomerProfile(Base):
-    """Single source of truth at customer_unique_id grain."""
+    """Cross-sectional customer profile; the source has no repeat customers."""
 
     __tablename__ = "customer_profile"
     __table_args__ = (
-        Index("ix_customer_profile_segment", "rfm_segment"),
-        Index("ix_customer_profile_region", "primary_state", "primary_city"),
+        Index("ix_customer_profile_dimensions", "segment", "city_type", "region"),
+        Index("ix_customer_profile_order_value", "order_value"),
         {"schema": "marts"},
     )
 
-    customer_unique_id: Mapped[str] = mapped_column(String, primary_key=True)
-    first_order_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    last_order_ts: Mapped[datetime | None] = mapped_column(DateTime)
-    order_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    total_spend: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    primary_state: Mapped[str | None] = mapped_column(String(2))
-    primary_city: Mapped[str | None] = mapped_column(String)
-    recency_score: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    frequency_score: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    monetary_score: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    rfm_segment: Mapped[str] = mapped_column(String, nullable=False)
-    clv_historical: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    customer_id: Mapped[str] = mapped_column(String, primary_key=True)
+    order_date: Mapped[date] = mapped_column(Date, nullable=False)
+    recency_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    order_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    segment: Mapped[str] = mapped_column(String, nullable=False)
+    city_type: Mapped[str] = mapped_column(String, nullable=False)
+    region: Mapped[str] = mapped_column(String, nullable=False)
+    state: Mapped[str] = mapped_column(String, nullable=False)
+    order_value_tier: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class CustomerSegment(Base):
-    """Customer segment aggregate; never duplicates customer-grain RFM rows."""
+    """Given segment × order-value quartile × city-type summary."""
 
     __tablename__ = "customer_segments"
     __table_args__ = {"schema": "marts"}
 
     segment: Mapped[str] = mapped_column(String, primary_key=True)
+    order_value_tier: Mapped[str] = mapped_column(String, primary_key=True)
+    city_type: Mapped[str] = mapped_column(String, primary_key=True)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    avg_clv: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    avg_order_count: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-
-
-class AggregateDimensions:
-    """Shared dimensions for the remaining Phase 3 multidimensional marts."""
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    date: Mapped[date] = mapped_column(Date, nullable=False)
-    state: Mapped[str | None] = mapped_column(String(2))
-    city: Mapped[str | None] = mapped_column(String)
-    category: Mapped[str | None] = mapped_column(String)
-    seller_id: Mapped[str | None] = mapped_column(String)
-    payment_type: Mapped[str | None] = mapped_column(String)
-    customer_segment: Mapped[str | None] = mapped_column(String)
+    avg_order_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    avg_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    avg_discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
 
 
 class RevenueDaily(Base):
@@ -75,106 +63,98 @@ class RevenueDaily(Base):
 
     date: Mapped[date] = mapped_column(Date, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_discount_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    item_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    units: Mapped[int] = mapped_column(Integer, nullable=False)
+    avg_discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit_margin_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
 
 
 class RevenueByCategory(Base):
     __tablename__ = "revenue_by_category"
     __table_args__ = (
-        Index("ix_revenue_category_date", "category", "date"),
+        Index("ix_revenue_category_date", "category", "sub_category", "date"),
         {"schema": "marts"},
     )
 
     date: Mapped[date] = mapped_column(Date, primary_key=True)
     category: Mapped[str] = mapped_column(String, primary_key=True)
+    sub_category: Mapped[str] = mapped_column(String, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_discount_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
     units: Mapped[int] = mapped_column(Integer, nullable=False)
+    avg_discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit_margin_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
 
 
 class RevenueByRegion(Base):
     __tablename__ = "revenue_by_region"
     __table_args__ = (
-        Index("ix_revenue_region_date", "state", "city", "date"),
+        Index("ix_revenue_region_date", "region", "state", "city_type", "date"),
         {"schema": "marts"},
     )
 
     date: Mapped[date] = mapped_column(Date, primary_key=True)
-    state: Mapped[str] = mapped_column(String(2), primary_key=True)
-    city: Mapped[str] = mapped_column(String, primary_key=True)
+    state: Mapped[str] = mapped_column(String, primary_key=True)
+    region: Mapped[str] = mapped_column(String, primary_key=True)
+    city_type: Mapped[str] = mapped_column(String, primary_key=True)
     revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_discount_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     customer_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    latitude: Mapped[float | None] = mapped_column(Float)
-    longitude: Mapped[float | None] = mapped_column(Float)
-
-
-class SellerPerformance(Base):
-    __tablename__ = "seller_performance"
-    __table_args__ = (
-        Index("ix_seller_performance_date", "seller_id", "date"),
-        {"schema": "marts"},
-    )
-
-    date: Mapped[date] = mapped_column(Date, primary_key=True)
-    seller_id: Mapped[str] = mapped_column(String, primary_key=True)
-    revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    order_count: Mapped[int] = mapped_column(Integer, nullable=False)
     units: Mapped[int] = mapped_column(Integer, nullable=False)
-    avg_review_score: Mapped[Decimal | None] = mapped_column(Numeric)
+    avg_discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit_margin_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=False)
+    longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
 
-class PaymentMethodMix(Base):
-    __tablename__ = "payment_method_mix"
+class ShippingPerformance(Base):
+    """Descriptive shipping-duration mart; not a delay-label definition."""
+
+    __tablename__ = "shipping_performance"
     __table_args__ = (
-        Index("ix_payment_mix_date", "payment_type", "date"),
+        Index("ix_shipping_performance_date", "ship_mode", "region", "date"),
         {"schema": "marts"},
     )
 
     date: Mapped[date] = mapped_column(Date, primary_key=True)
-    payment_type: Mapped[str] = mapped_column(String, primary_key=True)
-    payment_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    ship_mode: Mapped[str] = mapped_column(String, primary_key=True)
+    region: Mapped[str] = mapped_column(String, primary_key=True)
     order_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    payment_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    avg_installments: Mapped[Decimal | None] = mapped_column(Numeric)
+    avg_shipping_days: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    median_shipping_days: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    min_shipping_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    max_shipping_days: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
-class DeliveryPerformance(AggregateDimensions, Base):
-    __tablename__ = "delivery_performance"
-    __table_args__ = (
-        Index("ix_delivery_performance_filters", "date", "state", "category"),
-        {"schema": "marts"},
-    )
-
-    review_score: Mapped[int | None] = mapped_column(SmallInteger)
-    order_status: Mapped[str] = mapped_column(String, nullable=False)
-    order_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    delivered_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    late_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    avg_delivery_days: Mapped[Decimal | None] = mapped_column(Numeric)
-    avg_delivery_delay_days: Mapped[Decimal | None] = mapped_column(Numeric)
-
-
-class ReviewSummary(AggregateDimensions, Base):
-    __tablename__ = "review_summary"
+class CategoryDiscountProfit(Base):
+    __tablename__ = "category_discount_profit"
     __table_args__ = (
         Index(
-            "ix_review_summary_filters", "date", "category", "seller_id", "review_score"
+            "ix_category_discount_profit", "category", "sub_category", "discount_band"
         ),
         {"schema": "marts"},
     )
 
-    review_score: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    review_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    avg_review_score: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
-    comments_with_text: Mapped[int] = mapped_column(Integer, nullable=False)
+    category: Mapped[str] = mapped_column(String, primary_key=True)
+    sub_category: Mapped[str] = mapped_column(String, primary_key=True)
+    discount_band: Mapped[str] = mapped_column(String, primary_key=True)
+    order_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    avg_discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    avg_profit_margin_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
 
 
 class KpiSnapshot(Base):
-    """Dimension-free latest snapshot; arbitrary periods read revenue_daily."""
+    """Dimension-free all-observed-period snapshot."""
 
     __tablename__ = "kpi_snapshot"
     __table_args__ = (
@@ -187,9 +167,13 @@ class KpiSnapshot(Base):
     period_start: Mapped[date] = mapped_column(Date, nullable=False)
     period_end: Mapped[date] = mapped_column(Date, nullable=False)
     total_revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    total_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     total_orders: Mapped[int] = mapped_column(Integer, nullable=False)
     total_customers: Mapped[int] = mapped_column(Integer, nullable=False)
     average_order_value: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    average_discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit_margin_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     latest_month_revenue: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    latest_month_profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     revenue_mom_growth_pct: Mapped[Decimal | None] = mapped_column(Numeric)
     revenue_yoy_growth_pct: Mapped[Decimal | None] = mapped_column(Numeric)

@@ -1,51 +1,32 @@
-"""Binding business-metric SQL shared by marts and analytics services."""
+"""Binding Indian Store Data business metrics shared by mart builders."""
 
-ELIGIBLE_STATUS = "delivered"
-
+# There is no order-status field in the source, so every curated order is eligible.
 ELIGIBLE_ORDER_TOTALS_CTE = """
 eligible_order_totals AS (
     SELECT
         o.order_id,
         o.customer_id,
-        c.customer_unique_id,
-        o.purchase_ts,
-        o.order_status,
+        o.product_id,
+        o.order_date,
+        o.ship_mode,
+        o.shipping_days,
+        o.quantity,
+        o.sales::numeric AS revenue,
+        o.profit::numeric AS profit,
+        o.discount_pct::numeric AS discount_pct,
+        (o.sales * o.discount_pct / 100.0)::numeric AS discount_value,
+        CASE WHEN o.sales = 0 THEN 0
+             ELSE 100.0 * o.profit / o.sales END::numeric AS profit_margin_pct,
+        c.segment,
+        c.city_type,
         c.state,
-        c.city,
-        COALESCE(SUM(oi.price + oi.freight_value), 0)::numeric AS revenue,
-        COUNT(oi.*)::integer AS item_count
+        sr.region,
+        p.category,
+        p.sub_category
     FROM curated.orders o
     JOIN curated.customers c ON c.customer_id = o.customer_id
-    JOIN curated.order_items oi ON oi.order_id = o.order_id
-    WHERE o.order_status = 'delivered'
-    GROUP BY o.order_id, o.customer_id, c.customer_unique_id,
-             o.purchase_ts, o.order_status, c.state, c.city
-)
-"""
-
-REVIEW_GRAIN_DEDUP_CTE = """
-review_grain AS (
-    SELECT DISTINCT ON (review_id)
-        review_id,
-        order_id,
-        review_score,
-        comment_title,
-        comment_message,
-        review_creation_ts,
-        review_answer_ts
-    FROM curated.reviews
-    ORDER BY review_id, order_id
-)
-"""
-
-ORDER_REVIEW_CTE = """
-order_review AS (
-    SELECT
-        order_id,
-        ROUND(AVG(review_score))::smallint AS review_score,
-        COUNT(*)::integer AS review_links
-    FROM curated.reviews
-    GROUP BY order_id
+    JOIN curated.products p ON p.product_id = o.product_id
+    JOIN curated.state_region_reference sr ON sr.state = c.state
 )
 """
 

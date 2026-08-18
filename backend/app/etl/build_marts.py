@@ -1,4 +1,4 @@
-"""Build all Phase 3 marts atomically from curated data."""
+"""Atomically rebuild the Migration M2 marts from curated data."""
 
 import asyncio
 import json
@@ -14,41 +14,17 @@ MART_TABLES = (
     "revenue_daily",
     "revenue_by_category",
     "revenue_by_region",
+    "shipping_performance",
     "customer_profile",
     "customer_segments",
-    "seller_performance",
-    "payment_method_mix",
-    "delivery_performance",
-    "review_summary",
+    "category_discount_profit",
     "kpi_snapshot",
 )
 
-
-TEMP_FACTS_SQL = """
-CREATE TEMP TABLE item_facts ON COMMIT DROP AS
-WITH order_review AS (
-    SELECT order_id, ROUND(AVG(review_score))::smallint AS review_score
-    FROM curated.reviews
-    GROUP BY order_id
-)
-SELECT o.purchase_ts::date AS date,
-       c.state, c.city, c.latitude, c.longitude,
-       COALESCE(p.category_name_english, p.category_name, 'unknown') AS category,
-       oi.seller_id,
-       ps.primary_payment_type AS payment_type,
-       cp.rfm_segment AS customer_segment,
-       rv.review_score,
-       o.order_id, c.customer_unique_id,
-       o.order_status, o.delivery_days, o.delivery_delay_days, o.is_late,
-       oi.order_item_id, oi.price, oi.freight_value,
-       (oi.price + oi.freight_value)::numeric AS revenue
-FROM curated.orders o
-JOIN curated.customers c ON c.customer_id = o.customer_id
-JOIN curated.order_items oi ON oi.order_id = o.order_id
-JOIN curated.products p ON p.product_id = oi.product_id
-LEFT JOIN curated.payment_summary ps ON ps.order_id = o.order_id
-LEFT JOIN marts.customer_profile cp ON cp.customer_unique_id = c.customer_unique_id
-LEFT JOIN order_review rv ON rv.order_id = o.order_id
+TEMP_FACTS_SQL = f"""
+CREATE TEMP TABLE order_facts ON COMMIT DROP AS
+WITH {ELIGIBLE_ORDER_TOTALS_CTE}
+SELECT * FROM eligible_order_totals
 """
 
 
@@ -63,182 +39,130 @@ async def _populate_marts(connection: Connection) -> dict[str, int]:
     await connection.execute(
         """
         INSERT INTO marts.revenue_daily (
-            date, revenue, order_count, customer_count, item_count
+            date, revenue, total_profit, total_discount_value, order_count,
+            customer_count, units, avg_discount_pct, profit_margin_pct
         )
-        SELECT date, SUM(revenue), COUNT(DISTINCT order_id),
-               COUNT(DISTINCT customer_unique_id), COUNT(*)
-        FROM item_facts
-        WHERE order_status = 'delivered'
-        GROUP BY date
+        SELECT order_date, SUM(revenue), SUM(profit), SUM(discount_value),
+               COUNT(DISTINCT order_id), COUNT(DISTINCT customer_id),
+               SUM(quantity), AVG(discount_pct),
+               100.0 * SUM(profit) / NULLIF(SUM(revenue), 0)
+        FROM order_facts
+        GROUP BY order_date
         """
     )
     await connection.execute(
         """
         INSERT INTO marts.revenue_by_category (
-            date, category, revenue, order_count, customer_count, units
+            date, category, sub_category, revenue, total_profit,
+            total_discount_value, order_count, customer_count, units,
+            avg_discount_pct, profit_margin_pct
         )
-        SELECT date, category, SUM(revenue), COUNT(DISTINCT order_id),
-               COUNT(DISTINCT customer_unique_id), COUNT(*)
-        FROM item_facts
-        WHERE order_status = 'delivered'
-        GROUP BY date, category
+        SELECT order_date, category, sub_category, SUM(revenue), SUM(profit),
+               SUM(discount_value), COUNT(DISTINCT order_id),
+               COUNT(DISTINCT customer_id), SUM(quantity), AVG(discount_pct),
+               100.0 * SUM(profit) / NULLIF(SUM(revenue), 0)
+        FROM order_facts
+        GROUP BY order_date, category, sub_category
         """
     )
     await connection.execute(
         """
         INSERT INTO marts.revenue_by_region (
-            date, state, city, revenue, order_count, customer_count,
-            latitude, longitude
+            date, state, region, city_type, revenue, total_profit,
+            total_discount_value, order_count, customer_count, units,
+            avg_discount_pct, profit_margin_pct, latitude, longitude
         )
-        WITH coordinate_points AS (
-            SELECT DISTINCT state, city, latitude, longitude
-            FROM curated.customers
-            WHERE state IS NOT NULL AND city IS NOT NULL
-              AND latitude IS NOT NULL AND longitude IS NOT NULL
-        ), city_coordinates AS (
-            SELECT state, city,
-                   percentile_cont(0.5) WITHIN GROUP (ORDER BY latitude)
-                       AS latitude,
-                   percentile_cont(0.5) WITHIN GROUP (ORDER BY longitude)
-                       AS longitude
-            FROM coordinate_points
-            GROUP BY state, city
-        ), regional_revenue AS (
-            SELECT date, state, city, SUM(revenue) AS revenue,
-                   COUNT(DISTINCT order_id) AS order_count,
-                   COUNT(DISTINCT customer_unique_id) AS customer_count
-            FROM item_facts
-            WHERE order_status = 'delivered'
-              AND state IS NOT NULL AND city IS NOT NULL
-            GROUP BY date, state, city
-        )
-        SELECT revenue.date, revenue.state, revenue.city, revenue.revenue,
-               revenue.order_count, revenue.customer_count,
-               coordinates.latitude, coordinates.longitude
-        FROM regional_revenue AS revenue
-        LEFT JOIN city_coordinates AS coordinates
-          ON coordinates.state = revenue.state
-         AND coordinates.city = revenue.city
+        SELECT f.order_date, f.state, f.region, f.city_type,
+               SUM(f.revenue), SUM(f.profit), SUM(f.discount_value),
+               COUNT(DISTINCT f.order_id), COUNT(DISTINCT f.customer_id),
+               SUM(f.quantity), AVG(f.discount_pct),
+               100.0 * SUM(f.profit) / NULLIF(SUM(f.revenue), 0),
+               g.latitude, g.longitude
+        FROM order_facts f
+        JOIN curated.state_geocode g ON g.state = f.state
+        GROUP BY f.order_date, f.state, f.region, f.city_type,
+                 g.latitude, g.longitude
         """
     )
     await connection.execute(
         """
-        INSERT INTO marts.seller_performance (
-            date, seller_id, revenue, order_count, units, avg_review_score
+        INSERT INTO marts.shipping_performance (
+            date, ship_mode, region, order_count, avg_shipping_days,
+            median_shipping_days, min_shipping_days, max_shipping_days
         )
-        WITH seller_orders AS (
-            SELECT date, seller_id, order_id, SUM(revenue) AS revenue,
-                   COUNT(*) AS units, MAX(review_score) AS review_score
-            FROM item_facts
-            WHERE order_status = 'delivered'
-            GROUP BY date, seller_id, order_id
-        )
-        SELECT date, seller_id, SUM(revenue), COUNT(*), SUM(units),
-               AVG(review_score::numeric)
-        FROM seller_orders
-        GROUP BY date, seller_id
+        SELECT order_date, ship_mode, region, COUNT(*)::integer,
+               AVG(shipping_days::numeric),
+               percentile_cont(0.5) WITHIN GROUP (ORDER BY shipping_days),
+               MIN(shipping_days), MAX(shipping_days)
+        FROM order_facts
+        WHERE ship_mode IS NOT NULL AND shipping_days IS NOT NULL
+        GROUP BY order_date, ship_mode, region
         """
     )
     await connection.execute(
         """
-        INSERT INTO marts.payment_method_mix (
-            date, payment_type, payment_count, order_count, payment_value,
-            avg_installments
+        INSERT INTO marts.category_discount_profit (
+            category, sub_category, discount_band, order_count, revenue,
+            total_profit, avg_discount_pct, avg_profit_margin_pct
         )
-        SELECT o.purchase_ts::date, pd.payment_type, COUNT(*),
-               COUNT(DISTINCT o.order_id), SUM(pd.payment_value),
-               AVG(pd.payment_installments::numeric)
-        FROM curated.payment_details pd
-        JOIN curated.orders o ON o.order_id = pd.order_id
-        WHERE o.order_status = 'delivered'
-        GROUP BY o.purchase_ts::date, pd.payment_type
+        WITH bounds AS (
+            SELECT percentile_cont(0.25) WITHIN GROUP (ORDER BY discount_pct) AS q1,
+                   percentile_cont(0.50) WITHIN GROUP (ORDER BY discount_pct) AS q2,
+                   percentile_cont(0.75) WITHIN GROUP (ORDER BY discount_pct) AS q3
+            FROM order_facts
+        ), banded AS (
+            SELECT f.*,
+                   CASE
+                       WHEN discount_pct <= q1 THEN 'Q1 - Lowest'
+                       WHEN discount_pct <= q2 THEN 'Q2 - Lower-Middle'
+                       WHEN discount_pct <= q3 THEN 'Q3 - Upper-Middle'
+                       ELSE 'Q4 - Highest'
+                   END AS discount_band
+            FROM order_facts f CROSS JOIN bounds
+        )
+        SELECT category, sub_category, discount_band, COUNT(*)::integer,
+               SUM(revenue), SUM(profit), AVG(discount_pct),
+               AVG(profit_margin_pct)
+        FROM banded
+        GROUP BY category, sub_category, discount_band
         """
     )
     await connection.execute(
         """
-        INSERT INTO marts.delivery_performance (
-            date, state, city, category, seller_id, payment_type,
-            customer_segment, review_score, order_status, order_count,
-            delivered_count, late_count, avg_delivery_days,
-            avg_delivery_delay_days
-        )
-        SELECT date, state, city, category, seller_id, payment_type,
-               customer_segment, review_score, order_status,
-               COUNT(DISTINCT order_id),
-               COUNT(DISTINCT order_id) FILTER (WHERE order_status = 'delivered'),
-               COUNT(DISTINCT order_id) FILTER (WHERE is_late),
-               AVG(delivery_days::numeric), AVG(delivery_delay_days::numeric)
-        FROM item_facts
-        GROUP BY date, state, city, category, seller_id, payment_type,
-                 customer_segment, review_score, order_status
-        """
-    )
-    await connection.execute(
-        """
-        INSERT INTO marts.review_summary (
-            date, state, city, category, seller_id, payment_type,
-            customer_segment, review_score, review_count, avg_review_score,
-            comments_with_text
-        )
-        WITH review_grain AS (
-            SELECT DISTINCT ON (review_id)
-                review_id, order_id, review_score, comment_message,
-                review_creation_ts
-            FROM curated.reviews
-            ORDER BY review_id, order_id
-        )
-        SELECT o.purchase_ts::date, c.state, c.city,
-               COALESCE(p.category_name_english, p.category_name, 'unknown'),
-               oi.seller_id, ps.primary_payment_type, cp.rfm_segment,
-               rg.review_score, COUNT(DISTINCT rg.review_id),
-               AVG(rg.review_score::numeric),
-               COUNT(DISTINCT rg.review_id) FILTER (
-                   WHERE rg.comment_message IS NOT NULL
-               )
-        FROM review_grain rg
-        JOIN curated.orders o ON o.order_id = rg.order_id
-        JOIN curated.customers c ON c.customer_id = o.customer_id
-        JOIN curated.order_items oi ON oi.order_id = o.order_id
-        JOIN curated.products p ON p.product_id = oi.product_id
-        LEFT JOIN curated.payment_summary ps ON ps.order_id = o.order_id
-        LEFT JOIN marts.customer_profile cp
-          ON cp.customer_unique_id = c.customer_unique_id
-        GROUP BY o.purchase_ts::date, c.state, c.city,
-                 COALESCE(p.category_name_english, p.category_name, 'unknown'),
-                 oi.seller_id, ps.primary_payment_type, cp.rfm_segment,
-                 rg.review_score
-        """
-    )
-    await connection.execute(
-        f"""
         INSERT INTO marts.kpi_snapshot (
             snapshot_id, generated_at, period_start, period_end,
-            total_revenue, total_orders, total_customers,
-            average_order_value, latest_month_revenue,
+            total_revenue, total_profit, total_orders, total_customers,
+            average_order_value, average_discount_pct, profit_margin_pct,
+            latest_month_revenue, latest_month_profit,
             revenue_mom_growth_pct, revenue_yoy_growth_pct
         )
-        WITH {ELIGIBLE_ORDER_TOTALS_CTE}, monthly AS (
-            SELECT date_trunc('month', purchase_ts)::date AS month,
-                   SUM(revenue)::numeric AS revenue
-            FROM eligible_order_totals GROUP BY 1
+        WITH monthly AS (
+            SELECT date_trunc('month', order_date)::date AS month,
+                   SUM(revenue)::numeric AS revenue,
+                   SUM(profit)::numeric AS profit
+            FROM order_facts GROUP BY 1
         ), bounds AS (
-            SELECT MIN(purchase_ts)::date AS period_start,
-                   MAX(purchase_ts)::date AS period_end,
-                   date_trunc('month', MAX(purchase_ts))::date AS latest_month
-            FROM eligible_order_totals
+            SELECT MIN(order_date) AS period_start, MAX(order_date) AS period_end,
+                   date_trunc('month', MAX(order_date))::date AS latest_month
+            FROM order_facts
+        ), totals AS (
+            SELECT SUM(revenue) AS revenue, SUM(profit) AS profit,
+                   COUNT(DISTINCT order_id)::integer AS orders,
+                   COUNT(DISTINCT customer_id)::integer AS customers,
+                   AVG(discount_pct) AS avg_discount_pct
+            FROM order_facts
         )
         SELECT 1, CURRENT_TIMESTAMP, b.period_start, b.period_end,
-               SUM(ot.revenue), COUNT(DISTINCT ot.order_id),
-               COUNT(DISTINCT ot.customer_unique_id),
-               SUM(ot.revenue) / NULLIF(COUNT(DISTINCT ot.order_id), 0),
-               lm.revenue,
-               100 * (lm.revenue - pm.revenue) / NULLIF(pm.revenue, 0),
-               100 * (lm.revenue - ym.revenue) / NULLIF(ym.revenue, 0)
-        FROM eligible_order_totals ot CROSS JOIN bounds b
+               t.revenue, t.profit, t.orders, t.customers,
+               t.revenue / NULLIF(t.orders, 0), t.avg_discount_pct,
+               100.0 * t.profit / NULLIF(t.revenue, 0),
+               lm.revenue, lm.profit,
+               100.0 * (lm.revenue - pm.revenue) / NULLIF(pm.revenue, 0),
+               100.0 * (lm.revenue - ym.revenue) / NULLIF(ym.revenue, 0)
+        FROM totals t CROSS JOIN bounds b
         JOIN monthly lm ON lm.month = b.latest_month
         LEFT JOIN monthly pm ON pm.month = b.latest_month - INTERVAL '1 month'
         LEFT JOIN monthly ym ON ym.month = b.latest_month - INTERVAL '1 year'
-        GROUP BY b.period_start, b.period_end, lm.revenue, pm.revenue, ym.revenue
         """
     )
     for table in MART_TABLES:
@@ -250,7 +174,7 @@ async def _populate_marts(connection: Connection) -> dict[str, int]:
 
 
 async def build_marts() -> dict[str, int]:
-    """Rebuild every mart in one transaction and append an audit record."""
+    """Rebuild every M2 mart in one transaction and record the batch run."""
     connection = await connect()
     started_at = datetime.now(UTC).replace(tzinfo=None)
     log_id = int(
