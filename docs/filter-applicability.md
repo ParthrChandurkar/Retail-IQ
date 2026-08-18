@@ -1,30 +1,30 @@
-# Phase 3 Mart and Filter Applicability
+# Migration M2 Mart and Filter Applicability
 
-This table is the binding Phase 3 compatibility contract for the shared filters in SRS §9.6. `date_from` and `date_to` both apply to the `date` column, which is derived exclusively from `order_purchase_timestamp` as required by Addendum §7. A mart is marked supported only when its physical DDL carries the required dimension with populated values.
+This is the physical filter contract for the Indian Store Data marts. `date` is derived exclusively from `curated.orders.order_date`; geographic `region` is derived exclusively from `curated.state_region_reference`, never from `customers.region_as_reported`.
 
-| Mart / future endpoint consumer | Date | State | City | Category | Seller | Payment type | Customer segment | Review score |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `kpi_snapshot` + `revenue_daily` / `GET /dashboard/summary` | Yes¹ | No | No | No | No | No | No | No |
-| `revenue_daily` / `GET /dashboard/revenue-trend` | Yes | No | No | No | No | No | No | No |
-| `revenue_by_category` / category endpoints; category-filtered `GET /dashboard/revenue-trend` | Yes | No | No | Yes | No | No | No | No |
-| `revenue_by_region` / region endpoints; geography-filtered `GET /dashboard/revenue-trend` | Yes | Yes | Yes | No | No | No | No | No |
-| `customer_profile` / `GET /customers/rfm`, `GET /customers/{id}`, `GET /customers/clv-distribution`, `GET /customers/repeat-purchase-rate` | No | Yes | Yes | No | No | No | Yes | No |
-| `customer_segments` / `GET /customers/segments` | No | No | No | No | No | No | Yes | No |
-| `seller_performance` / seller endpoints; seller-filtered `GET /dashboard/revenue-trend` | Yes | No | No | No | Yes | No | No | No |
-| `payment_method_mix` / `GET /payments/method-mix` | Yes | No | No | No | No | Yes | No | No |
-| `curated.payment_details` + orders / `GET /payments/installments-distribution` | Yes | No | No | No | No | Yes | No | No |
-| `delivery_performance` / `GET /regions/delivery-performance` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| `review_summary` / `GET /reviews/score-distribution`, `GET /reviews/trends` | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| Mart | Date | Region | State | City type | Category | Sub-category | Segment | Ship mode | Order-value tier | Discount band |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `kpi_snapshot` | No¹ | No | No | No | No | No | No | No | No | No |
+| `revenue_daily` | Yes | No | No | No | No | No | No | No | No | No |
+| `revenue_by_category` | Yes | No | No | No | Yes | Yes | No | No | No | No |
+| `revenue_by_region` | Yes | Yes | Yes | Yes | No | No | No | No | No | No |
+| `shipping_performance` | Yes | Yes | No | No | No | No | No | Yes | No | No |
+| `customer_profile` | Yes² | Yes | Yes | Yes | No | No | Yes | No | Yes | No |
+| `customer_segments` | No | No | No | Yes | No | No | Yes | No | Yes | No |
+| `category_discount_profit` | No | No | No | No | Yes | Yes | No | No | No | Yes |
 
-¹ `marts.kpi_snapshot` remains the required dimension-free singleton. With no date parameters, the summary reads its all-observed-period snapshot. A future summary request with `date_from` and/or `date_to` must calculate the selected and prior periods from `marts.revenue_daily`; it must not pretend that the singleton contains arbitrary period cuts. All seven non-date filters on `/dashboard/summary` remain unsupported per Addendum §6.
+¹ `kpi_snapshot` is the dimension-free, all-observed-period singleton. Date-filtered KPI requests use `revenue_daily`.
 
-## Grain and metric safeguards
+² `customer_profile.order_date` supports cross-sectional cohort filtering. It is not repeat-purchase history.
 
-- The shared eligible-order definition is `order_status = 'delivered'`. Revenue is item price plus freight; AOV is delivered revenue divided by distinct delivered orders; customer count is distinct `customer_unique_id` with an eligible order.
-- Revenue marts use the order's primary payment type from `curated.payment_summary`, avoiding revenue multiplication for split-payment orders.
-- Customer RFM, segmentation, repeat purchase, and historical CLV read only `marts.customer_profile`. There is deliberately no `marts.customer_rfm` table.
-- `marts.customer_segments` is strictly segment grain and is derived with `GROUP BY rfm_segment` over `customer_profile`.
-- `review_summary` uses one deterministic row per `review_id`; delivery and review-outcome comparisons remain at order grain.
-- A filter marked `No` must be rejected by the future Phase 5 API with `400` and `code: "unsupported_filter"`; Phase 3 does not add routers.
-- The five corrected rollups use endpoint-specific grains: `date`; `date, category`; `date, state, city`; `date, seller_id`; and `date, payment_type`. Their former generic combined-filter columns were removed because those columns made the tables near-fact-grain and conflicted with the SRS §16 pre-aggregation intent.
-- Endpoint-level routing across these marts, including the rule that only one dimensional filter family may drive a revenue-trend request, is defined in `docs/mart-routing.md`.
+## Grain and integrity safeguards
+
+- All curated orders are eligible because the source has no status/cancellation field.
+- Revenue is `SUM(sales)`; profit is `SUM(profit)`; AOV is revenue divided by distinct orders; customer count is distinct `customer_id`.
+- `revenue_by_category` grain is `date × category × sub_category`; no Product-ID aggregation is exposed because Product ID repetition is 0%.
+- `revenue_by_region` grain is `date × state × region × city_type`, with region obtained from the trusted state mapping.
+- `customer_profile` is cross-sectional. It contains Order Value, never CLV, and contains no Frequency or monetary-over-time score.
+- `customer_segments` is `segment × order_value_tier × city_type`, using data-derived order-value quartiles.
+- Discount bands are data-derived quartiles rather than assumed round-number thresholds.
+- `shipping_performance` is descriptive only. M2 found ship-mode durations effectively indistinguishable, so it must not be interpreted as proof of service-level performance or used as a delayed-shipment label.
+- Removed marts: `seller_performance`, `payment_method_mix`, `review_summary`, and `delivery_performance`.
