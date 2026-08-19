@@ -118,10 +118,12 @@ async def anova_margin_by_city_type() -> dict[str, Any]:
 async def t_test_margin_by_discount() -> dict[str, Any]:
     """Compare profit margin for data-derived high- and low-discount orders."""
     frame = await analysis_frame()
-    low_cutoff = float(frame["discount_pct"].quantile(0.25))
-    high_cutoff = float(frame["discount_pct"].quantile(0.75))
-    low = frame.loc[frame["discount_pct"] <= low_cutoff, "profit_margin_pct"].dropna()
-    high = frame.loc[frame["discount_pct"] >= high_cutoff, "profit_margin_pct"].dropna()
+    low_rows = frame.loc[frame["discount_band"] == "low"]
+    high_rows = frame.loc[frame["discount_band"] == "high"]
+    low_cutoff = float(low_rows["discount_pct"].max())
+    high_cutoff = float(high_rows["discount_pct"].min())
+    low = low_rows["profit_margin_pct"].dropna()
+    high = high_rows["profit_margin_pct"].dropna()
     statistic, p_value = compute_welch_ttest(high, low)
     pooled_std = float(
         np.sqrt(

@@ -6,6 +6,7 @@ from decimal import Decimal
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Float,
@@ -61,6 +62,15 @@ class Order(Base):
         Index("ix_orders_customer", "customer_id"),
         Index("ix_orders_order_date", "order_date"),
         Index("ix_orders_product", "product_id"),
+        Index("ix_orders_discount_band", "discount_band"),
+        Index("ix_orders_high_profit", "is_high_profit_order"),
+        Index("ix_orders_calendar_features", "order_year", "order_month", "order_dow"),
+        CheckConstraint(
+            "discount_band IN ('low','medium_low','medium_high','high')",
+            name="ck_orders_discount_band",
+        ),
+        CheckConstraint("order_month BETWEEN 1 AND 12", name="ck_orders_order_month"),
+        CheckConstraint("order_dow BETWEEN 1 AND 7", name="ck_orders_order_dow"),
         {"schema": "curated"},
     )
     order_id: Mapped[str] = mapped_column(String, primary_key=True)
@@ -74,11 +84,16 @@ class Order(Base):
     ship_date: Mapped[date | None] = mapped_column(Date)
     ship_mode: Mapped[str | None] = mapped_column(String)
     shipping_days: Mapped[int | None] = mapped_column(Integer)
-    is_delayed_shipment: Mapped[bool | None] = mapped_column(Boolean)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     sales: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     discount_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
     profit: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    profit_margin_pct: Mapped[Decimal] = mapped_column(Numeric, nullable=False)
+    discount_band: Mapped[str] = mapped_column(String, nullable=False)
+    is_high_profit_order: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    order_month: Mapped[int] = mapped_column(Integer, nullable=False)
+    order_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    order_dow: Mapped[int] = mapped_column(Integer, nullable=False)
     is_sales_outlier: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=text("false")
     )

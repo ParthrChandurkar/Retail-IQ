@@ -105,25 +105,10 @@ async def _populate_marts(connection: Connection) -> dict[str, int]:
             category, sub_category, discount_band, order_count, revenue,
             total_profit, avg_discount_pct, avg_profit_margin_pct
         )
-        WITH bounds AS (
-            SELECT percentile_cont(0.25) WITHIN GROUP (ORDER BY discount_pct) AS q1,
-                   percentile_cont(0.50) WITHIN GROUP (ORDER BY discount_pct) AS q2,
-                   percentile_cont(0.75) WITHIN GROUP (ORDER BY discount_pct) AS q3
-            FROM order_facts
-        ), banded AS (
-            SELECT f.*,
-                   CASE
-                       WHEN discount_pct <= q1 THEN 'Q1 - Lowest'
-                       WHEN discount_pct <= q2 THEN 'Q2 - Lower-Middle'
-                       WHEN discount_pct <= q3 THEN 'Q3 - Upper-Middle'
-                       ELSE 'Q4 - Highest'
-                   END AS discount_band
-            FROM order_facts f CROSS JOIN bounds
-        )
         SELECT category, sub_category, discount_band, COUNT(*)::integer,
                SUM(revenue), SUM(profit), AVG(discount_pct),
                AVG(profit_margin_pct)
-        FROM banded
+        FROM order_facts
         GROUP BY category, sub_category, discount_band
         """
     )

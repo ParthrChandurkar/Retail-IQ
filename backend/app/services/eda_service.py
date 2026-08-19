@@ -83,11 +83,10 @@ async def analysis_frame() -> pd.DataFrame:
                c.region_as_reported, r.country, c.segment, o.ship_mode,
                c.state, c.postal_code, p.sub_category,
                sr.region AS trusted_region, r.year AS year_as_reported,
-               EXTRACT(YEAR FROM o.order_date)::integer AS order_year,
+               o.order_year,
                o.order_date, o.sales, o.profit, o.discount_pct, o.quantity,
-               o.shipping_days,
-               CASE WHEN o.sales = 0 THEN NULL
-                    ELSE 100.0 * o.profit / o.sales END AS profit_margin_pct
+               o.shipping_days, o.profit_margin_pct, o.discount_band,
+               o.is_high_profit_order, o.order_month, o.order_dow
         FROM curated.orders o
         JOIN curated.customers c ON c.customer_id = o.customer_id
         JOIN curated.products p ON p.product_id = o.product_id

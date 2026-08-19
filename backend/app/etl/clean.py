@@ -1,8 +1,9 @@
-"""Transactional cleaning from the flat Indian Store Data source to curated.*."""
+"""Transactional cleaning and canonical row features for Indian Store Data."""
 
 import asyncpg
 
 from app.etl.database import connect
+from app.etl.feature_contract import discount_band_case
 
 CURATED_ENTITY_TABLES = ("orders", "products", "customers")
 
@@ -48,8 +49,14 @@ async def _load_products(connection: asyncpg.Connection) -> None:
 
 
 async def _load_orders(connection: asyncpg.Connection) -> None:
+    band_expression = discount_band_case(
+        "source.discount * 100",
+        "bounds.discount_q1",
+        "bounds.discount_median",
+        "bounds.discount_q3",
+    )
     await connection.execute(
-        """
+        f"""
         WITH valid_orders AS (
             SELECT DISTINCT ON (source.order_id)
                 source.*,
@@ -63,7 +70,7 @@ async def _load_orders(connection: asyncpg.Connection) -> None:
               AND source.order_date IS NOT NULL
               AND (source.ship_date IS NULL OR source.ship_date >= source.order_date)
               AND source.quantity IS NOT NULL AND source.quantity > 0
-              AND source.sales IS NOT NULL AND source.sales >= 0
+              AND source.sales IS NOT NULL AND source.sales > 0
               AND source.discount IS NOT NULL AND source.discount BETWEEN 0 AND 0.5
               AND source.profit IS NOT NULL
             ORDER BY source.order_id
@@ -72,19 +79,36 @@ async def _load_orders(connection: asyncpg.Connection) -> None:
                 percentile_cont(0.25) WITHIN GROUP (ORDER BY sales) AS sales_q1,
                 percentile_cont(0.75) WITHIN GROUP (ORDER BY sales) AS sales_q3,
                 percentile_cont(0.25) WITHIN GROUP (ORDER BY profit) AS profit_q1,
-                percentile_cont(0.75) WITHIN GROUP (ORDER BY profit) AS profit_q3
+                percentile_cont(0.75) WITHIN GROUP (ORDER BY profit) AS profit_q3,
+                percentile_cont(0.25) WITHIN GROUP (
+                    ORDER BY discount * 100
+                ) AS discount_q1,
+                percentile_cont(0.50) WITHIN GROUP (
+                    ORDER BY discount * 100
+                ) AS discount_median,
+                percentile_cont(0.75) WITHIN GROUP (
+                    ORDER BY discount * 100
+                ) AS discount_q3
             FROM valid_orders
         )
         INSERT INTO curated.orders (
             order_id, customer_id, product_id, order_date, ship_date, ship_mode,
-            shipping_days, is_delayed_shipment, quantity, sales, discount_pct,
-            profit, is_sales_outlier, is_profit_outlier
+            shipping_days, quantity, sales, discount_pct, profit,
+            profit_margin_pct, discount_band, is_high_profit_order,
+            order_month, order_year, order_dow,
+            is_sales_outlier, is_profit_outlier
         )
         SELECT
             source.order_id, source.customer_id, source.product_id,
             source.order_date, source.ship_date, NULLIF(BTRIM(source.ship_mode), ''),
-            source.calculated_shipping_days, NULL, source.quantity, source.sales,
+            source.calculated_shipping_days, source.quantity, source.sales,
             source.discount * 100, source.profit,
+            100.0 * source.profit / source.sales,
+            {band_expression},
+            source.profit >= bounds.profit_q3,
+            EXTRACT(MONTH FROM source.order_date)::integer,
+            EXTRACT(YEAR FROM source.order_date)::integer,
+            EXTRACT(ISODOW FROM source.order_date)::integer,
             source.sales < bounds.sales_q1 - 1.5 * (bounds.sales_q3 - bounds.sales_q1)
               OR source.sales > bounds.sales_q3 + 1.5 * (bounds.sales_q3 - bounds.sales_q1),
             source.profit < bounds.profit_q1 - 1.5 * (bounds.profit_q3 - bounds.profit_q1)
@@ -96,7 +120,7 @@ async def _load_orders(connection: asyncpg.Connection) -> None:
 
 
 async def clean_curated() -> dict[str, int]:
-    """Atomically rebuild only the M1 dataset-dependent curated entities."""
+    """Atomically rebuild dataset-dependent curated entities and M4 features."""
     connection = await connect()
     try:
         async with connection.transaction():

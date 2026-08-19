@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.etl.constants import DATASETS, SOURCE_HEADERS
 from app.etl.download_data import missing_files
+from app.etl.feature_contract import DISCOUNT_BANDS, discount_band_case
 from app.etl.ingest import convert_value
 from app.models.curated import Order, StateGeocode, StateRegionReference
 
@@ -43,7 +44,32 @@ def test_single_line_order_contract_has_no_order_item_model() -> None:
 def test_outlier_flag_contract_is_reflected_in_models() -> None:
     assert Order.__table__.c.is_sales_outlier.nullable is False
     assert Order.__table__.c.is_profit_outlier.nullable is False
-    assert Order.__table__.c.is_delayed_shipment.nullable is True
+
+
+def test_m4_feature_contract_is_first_class_and_excludes_retired_features() -> None:
+    columns = Order.__table__.c
+    for feature in (
+        "profit_margin_pct",
+        "discount_band",
+        "is_high_profit_order",
+        "order_month",
+        "order_year",
+        "order_dow",
+    ):
+        assert feature in columns
+        assert columns[feature].nullable is False
+    assert "is_delayed_shipment" not in columns
+    assert "is_repeat_customer" not in columns
+    assert DISCOUNT_BANDS == ("low", "medium_low", "medium_high", "high")
+
+
+def test_discount_band_boundaries_match_the_m3_outer_quartiles() -> None:
+    expression = discount_band_case("discount", "q1", "median", "q3")
+
+    assert "discount <= q1" in expression
+    assert "discount < median" in expression
+    assert "discount < q3" in expression
+    assert "ELSE 'high'" in expression
 
 
 def test_geographic_reference_separates_coordinates_and_regions() -> None:

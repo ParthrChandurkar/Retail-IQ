@@ -215,9 +215,10 @@ def test_refactored_marts_have_endpoint_specific_columns_and_grains() -> None:
         )
 
 
-def test_m1_shipping_duration_does_not_invent_a_delay_label() -> None:
+def test_m4_shipping_duration_does_not_invent_a_delay_label() -> None:
     cleaning_source = inspect.getsource(_load_orders)
 
     assert "source.ship_date - source.order_date" in cleaning_source
-    assert "source.calculated_shipping_days, NULL" in cleaning_source
-    assert "is_delayed_shipment" in cleaning_source
+    assert "is_delayed_shipment" not in cleaning_source
+    assert "is_high_profit_order" in cleaning_source
+    assert "EXTRACT(ISODOW" in cleaning_source
