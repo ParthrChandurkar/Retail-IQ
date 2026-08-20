@@ -51,18 +51,20 @@ def global_feature_importance(
 
 
 def business_interpretation(feature: str) -> str:
-    root = feature.split("_")[0]
-    mappings = {
-        "delivery": "Delivery experience is a major observable driver of review risk.",
-        "is": "Whether an order missed its promise materially changes satisfaction risk.",
-        "freight": "Shipping cost relative to merchandise value influences customer expectations.",
-        "total": "The order's monetary composition helps distinguish satisfaction risk.",
-        "seller": "Seller geography and fulfillment characteristics contribute to review outcomes.",
-        "dominant": "Product-category mix captures different fulfillment and expectation patterns.",
-        "customer": "Customer geography captures regional service-level differences.",
-        "primary": "Payment behavior provides context for the completed order experience.",
-    }
-    return mappings.get(
-        root,
-        "This operational input contributes materially to the model's global decisions.",
-    )
+    if feature == "sales":
+        return "Checkout sales value is the strongest commercial signal of high-profit orders."
+    if feature == "discount_pct":
+        return "Applied discount changes the margin available from an order before fulfilment."
+    if feature.startswith("category_") or feature.startswith("sub_category_"):
+        return "Product mix captures differences in the profit patterns of merchandise groups."
+    if feature.startswith("state_") or feature.startswith("region_"):
+        return "Trusted customer geography captures variation in the order mix without using reported Region."
+    if feature.startswith("segment_"):
+        return "The known customer segment provides commercial context at checkout."
+    if feature.startswith("city_type_"):
+        return (
+            "City type provides a governed India-specific customer-location dimension."
+        )
+    if feature == "order_month" or feature == "order_dow":
+        return "Order timing captures any repeatable checkout seasonality."
+    return "This checkout-time feature contributes to the model's global decisions."

@@ -1,4 +1,4 @@
-"""Binding positive-class evaluation for satisfaction models."""
+"""Binding positive-class evaluation for migrated high-profit models."""
 
 from dataclasses import dataclass
 from typing import Any
@@ -18,8 +18,8 @@ from sklearn.metrics import (
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import Pipeline
 
-POSITIVE_LABEL = "low_satisfaction"
-NEGATIVE_LABEL = "high_satisfaction"
+POSITIVE_LABEL = "high_profit_order"
+NEGATIVE_LABEL = "standard_profit_order"
 
 
 @dataclass(frozen=True)
@@ -36,12 +36,12 @@ class EvaluationResult:
     def as_dict(self) -> dict[str, Any]:
         return {
             "accuracy": self.accuracy,
-            "precision_low_satisfaction": self.precision,
-            "recall_low_satisfaction": self.recall,
-            "f1_low_satisfaction": self.f1,
+            "precision_high_profit_order": self.precision,
+            "recall_high_profit_order": self.recall,
+            "f1_high_profit_order": self.f1,
             "roc_auc": self.roc_auc,
             "cv_f1_scores": self.cv_f1_scores,
-            "cv_mean_f1_low_satisfaction": float(np.mean(self.cv_f1_scores)),
+            "cv_mean_f1_high_profit_order": float(np.mean(self.cv_f1_scores)),
             "cv_roc_auc_scores": self.cv_roc_auc_scores,
             "cv_mean_roc_auc": float(np.mean(self.cv_roc_auc_scores)),
             "confusion_matrix": self.confusion_matrix,
@@ -92,7 +92,7 @@ def evaluate_model(
         x_train,
         y_train,
         cv=cv_splits,
-        scoring={"f1_low_satisfaction": scorer, "roc_auc": "roc_auc"},
+        scoring={"f1_high_profit_order": scorer, "roc_auc": "roc_auc"},
         n_jobs=1,
     )
     return EvaluationResult(
@@ -103,7 +103,7 @@ def evaluate_model(
         recall=float(recall_score(y_test, predictions, pos_label=1, zero_division=0)),
         f1=float(f1_score(y_test, predictions, pos_label=1, zero_division=0)),
         roc_auc=float(roc_auc_score(y_test, probabilities)),
-        cv_f1_scores=[float(score) for score in cv_scores["test_f1_low_satisfaction"]],
+        cv_f1_scores=[float(score) for score in cv_scores["test_f1_high_profit_order"]],
         cv_roc_auc_scores=[float(score) for score in cv_scores["test_roc_auc"]],
         confusion_matrix=labeled_confusion_matrix(y_test, predictions),
     )
