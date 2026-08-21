@@ -28,6 +28,16 @@ documented setup sequence:
      make download-data
      ```
 
+   After extraction, `data/raw/` must contain exactly one dataset payload:
+   `store_sales_data (2).csv`. The ETL does not read the Kaggle ZIP, any renamed
+   copy, or any Olist-era CSV. Repository control files `.gitignore` and
+   `.gitkeep` remain alongside the source payload.
+
+   Verified M1 source identity:
+
+   - Data rows: `100,000` (header excluded)
+   - SHA-256: `df1dd4a0d6bd486d34499e87b249e875f2a03bc407f5ffdddddf34bea80e727e`
+
 4. Start the services:
 
    ```bash
