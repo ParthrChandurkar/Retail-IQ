@@ -17,11 +17,12 @@ documented setup sequence:
    cp frontend/.env.example frontend/.env
    ```
 
-3. Acquire `store_sales_data (2).csv` using either option:
+3. Acquire `indian_store_data.csv` using either option:
 
    - Manual: download it from
      [Kaggle](https://www.kaggle.com/datasets/abuhumzakhan/store-data), extract
-     it, and place `store_sales_data (2).csv` in `data/raw/`.
+     the upstream `store_sales_data (2).csv`, rename it to
+     `indian_store_data.csv`, and place it in `data/raw/`.
    - Automated: set `KAGGLE_USERNAME` and `KAGGLE_KEY`, then run:
 
      ```bash
@@ -29,8 +30,9 @@ documented setup sequence:
      ```
 
    After extraction, `data/raw/` must contain exactly one dataset payload:
-   `store_sales_data (2).csv`. The ETL does not read the Kaggle ZIP, any renamed
-   copy, or any Olist-era CSV. Repository control files `.gitignore` and
+   `indian_store_data.csv`. The automated path performs the upstream filename
+   normalization itself. The ETL does not read the Kaggle ZIP, duplicate copies,
+   or any Olist-era CSV. Repository control files `.gitignore` and
    `.gitkeep` remain alongside the source payload.
 
    Verified M1 source identity:

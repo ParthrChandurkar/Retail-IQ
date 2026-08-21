@@ -1,7 +1,7 @@
 # M1 Dataset Verification — Indian Store Data
 
 This artifact records the empirical decisions that govern the M1 schema. Values
-were computed from the downloaded `store_sales_data (2).csv`; they are not
+were computed from the canonical `indian_store_data.csv`; they are not
 inferred from the dataset description.
 
 ## Verified source facts

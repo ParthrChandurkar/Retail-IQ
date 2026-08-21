@@ -7,6 +7,15 @@ from app.core.config import get_settings
 from app.etl.constants import DATASETS
 
 KAGGLE_DATASET = "abuhumzakhan/store-data"
+KAGGLE_SOURCE_FILENAME = "store_sales_data (2).csv"
+
+
+def normalize_downloaded_filename(data_dir: Path) -> None:
+    """Rename Kaggle's artifact-style filename to the canonical ETL name."""
+    canonical = data_dir / DATASETS[0].filename
+    upstream = data_dir / KAGGLE_SOURCE_FILENAME
+    if not canonical.exists() and upstream.is_file():
+        upstream.replace(canonical)
 
 
 def missing_files(data_dir: Path) -> list[str]:
@@ -38,6 +47,7 @@ def download_or_validate() -> None:
     api = KaggleApi()
     api.authenticate()
     api.dataset_download_files(KAGGLE_DATASET, path=data_dir, unzip=True, quiet=False)
+    normalize_downloaded_filename(data_dir)
 
     missing = missing_files(data_dir)
     if missing:

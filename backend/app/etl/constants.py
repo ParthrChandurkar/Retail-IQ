@@ -18,7 +18,7 @@ class DatasetSpec:
 
 
 STORE_TRANSACTIONS = DatasetSpec(
-    "store_sales_data (2).csv",
+    "indian_store_data.csv",
     "store_transactions",
     (
         ("customer_id", "string"),

@@ -5,7 +5,11 @@ from decimal import Decimal
 from pathlib import Path
 
 from app.etl.constants import DATASETS, SOURCE_HEADERS
-from app.etl.download_data import missing_files
+from app.etl.download_data import (
+    KAGGLE_SOURCE_FILENAME,
+    missing_files,
+    normalize_downloaded_filename,
+)
 from app.etl.feature_contract import DISCOUNT_BANDS, discount_band_case
 from app.etl.ingest import convert_value
 from app.models.curated import Order, StateGeocode, StateRegionReference
@@ -13,7 +17,7 @@ from app.models.curated import Order, StateGeocode, StateRegionReference
 
 def test_dataset_contract_contains_the_verified_single_file() -> None:
     assert len(DATASETS) == 1
-    assert DATASETS[0].filename == "store_sales_data (2).csv"
+    assert DATASETS[0].filename == "indian_store_data.csv"
     assert DATASETS[0].table_name == "store_transactions"
     assert len(SOURCE_HEADERS) == 25
     assert SOURCE_HEADERS[20] == "Sub-Category"
@@ -25,6 +29,17 @@ def test_manual_dataset_placement_is_detected(tmp_path: Path) -> None:
         (data_dir / spec.filename).touch()
 
     assert missing_files(data_dir) == []
+
+
+def test_kaggle_artifact_filename_is_normalized(tmp_path: Path) -> None:
+    upstream = tmp_path / KAGGLE_SOURCE_FILENAME
+    upstream.write_text("source", encoding="utf-8")
+
+    normalize_downloaded_filename(tmp_path)
+
+    canonical = tmp_path / "indian_store_data.csv"
+    assert canonical.read_text(encoding="utf-8") == "source"
+    assert not upstream.exists()
 
 
 def test_raw_value_conversion_preserves_typed_values() -> None:
