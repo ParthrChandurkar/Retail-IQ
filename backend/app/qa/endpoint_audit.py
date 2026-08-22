@@ -1,8 +1,7 @@
-"""Exercise every SRS Section 9 operation against a running API."""
+"""Exercise the complete migrated M7 API contract against a running API."""
 
 import asyncio
 import os
-import statistics
 import time
 from typing import Any
 
@@ -11,42 +10,33 @@ import httpx
 from app.etl.database import connect
 
 
-async def sample_identifiers() -> dict[str, str]:
+async def sample_customer_id() -> str:
     connection = await connect()
     try:
-        row = await connection.fetchrow(
-            """SELECT
-                 (SELECT customer_unique_id FROM marts.customer_profile
-                    LIMIT 1) customer_id,
-                 (SELECT product_id FROM curated.products LIMIT 1) product_id,
-                 (SELECT seller_id FROM curated.sellers LIMIT 1) seller_id"""
+        value = await connection.fetchval(
+            "SELECT customer_id FROM marts.customer_profile LIMIT 1"
         )
-        if row is None or any(value is None for value in row.values()):
-            raise RuntimeError(
-                "The live audit requires populated curated data and marts."
-            )
-        return {key: str(value) for key, value in dict(row).items()}
+        if value is None:
+            raise RuntimeError("The live audit requires populated migrated marts.")
+        return str(value)
     finally:
         await connection.close()
 
 
 def prediction_payload() -> dict[str, Any]:
+    """The exact high-profit example fixed in the M6 report."""
     return {
-        "entity_id": "phase8-audit-order",
-        "total_price": 100,
-        "total_freight": 10,
-        "item_count": 1,
-        "product_count": 1,
-        "seller_count": 1,
-        "average_item_price": 100,
-        "maximum_item_price": 100,
-        "customer_state": "SP",
-        "seller_state": "SP",
-        "dominant_category": "health_beauty",
-        "primary_payment_type": "credit_card",
-        "purchase_month": 8,
-        "purchase_weekday": 3,
-        "purchase_hour": 14,
+        "entity_id": "m6-high-example",
+        "sales": 46837.74,
+        "discount_pct": 14.0,
+        "category": "Sessional Fruits & Vegetables",
+        "sub_category": "Carrots",
+        "segment": "Corporate",
+        "city_type": "Tier 2",
+        "state": "Tamil Nadu",
+        "region": "South",
+        "order_month": 7,
+        "order_dow": 7,
     }
 
 
@@ -55,9 +45,8 @@ async def run() -> None:
     password = os.environ.get("ADMIN_PASSWORD")
     if not email or not password:
         raise RuntimeError("ADMIN_EMAIL and ADMIN_PASSWORD are required for the audit.")
-    identifiers = await sample_identifiers()
+    customer_id = await sample_customer_id()
     base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
-    timings: dict[str, list[float]] = {}
     results: list[tuple[str, int, float]] = []
 
     async with httpx.AsyncClient(base_url=base_url, timeout=180) as client:
@@ -88,95 +77,74 @@ async def run() -> None:
             "/api/v1/auth/login",
             json={"email": email, "password": password},
         )
-        login_data = login.json()["data"]
-        client.headers["Authorization"] = f"Bearer {login_data['access_token']}"
-        refresh_token = login.cookies.get("refresh_token")
-        refresh = await call(
-            "auth.refresh",
-            "POST",
-            "/api/v1/auth/refresh",
-            headers={"Cookie": f"refresh_token={refresh_token}"},
-        )
         client.headers["Authorization"] = (
-            f"Bearer {refresh.json()['data']['access_token']}"
+            f"Bearer {login.json()['data']['access_token']}"
         )
         await call("auth.me", "GET", "/api/v1/auth/me")
 
         endpoints = [
-            ("dashboard.summary", "GET", "/api/v1/dashboard/summary"),
-            ("dashboard.revenue-trend", "GET", "/api/v1/dashboard/revenue-trend"),
+            ("dashboard.summary", "/api/v1/dashboard/summary"),
+            ("dashboard.revenue-trend", "/api/v1/dashboard/revenue-trend"),
             (
-                "dashboard.top-categories",
-                "GET",
-                "/api/v1/dashboard/top-categories?limit=5",
-            ),
-            ("dashboard.top-sellers", "GET", "/api/v1/dashboard/top-sellers?limit=5"),
-            ("dashboard.top-products", "GET", "/api/v1/dashboard/top-products?limit=5"),
-            ("customers.segments", "GET", "/api/v1/customers/segments"),
-            ("customers.rfm", "GET", "/api/v1/customers/rfm?page=1&page_size=5"),
-            ("customers.clv-distribution", "GET", "/api/v1/customers/clv-distribution"),
-            (
-                "customers.repeat-purchase-rate",
-                "GET",
-                "/api/v1/customers/repeat-purchase-rate",
+                "dashboard.revenue-trend.category",
+                "/api/v1/dashboard/revenue-trend?category=Electronics",
             ),
             (
-                "customers.detail",
-                "GET",
-                f"/api/v1/customers/{identifiers['customer_id']}",
+                "dashboard.revenue-trend.city-type",
+                "/api/v1/dashboard/revenue-trend?city_type=Tier%201",
             ),
-            ("products.performance", "GET", "/api/v1/products/performance"),
-            ("products.categories", "GET", "/api/v1/products/categories"),
-            ("products.detail", "GET", f"/api/v1/products/{identifiers['product_id']}"),
-            ("sellers.performance", "GET", "/api/v1/sellers/performance"),
-            ("sellers.detail", "GET", f"/api/v1/sellers/{identifiers['seller_id']}"),
-            ("regions.sales", "GET", "/api/v1/regions/sales"),
-            ("regions.geo", "GET", "/api/v1/regions/geo"),
+            ("dashboard.top-categories", "/api/v1/dashboard/top-categories?limit=5"),
+            ("customers.segments", "/api/v1/customers/segments"),
+            ("customers.profiles", "/api/v1/customers/profiles?page=1&page_size=5"),
             (
-                "regions.delivery-performance",
-                "GET",
-                "/api/v1/regions/delivery-performance",
+                "customers.order-value-distribution",
+                "/api/v1/customers/order-value-distribution",
             ),
-            ("payments.method-mix", "GET", "/api/v1/payments/method-mix"),
+            ("customers.detail", f"/api/v1/customers/{customer_id}"),
+            ("products.performance", "/api/v1/products/performance"),
+            ("products.categories", "/api/v1/products/categories"),
+            ("products.discount-profit", "/api/v1/products/discount-profit"),
+            ("regions.sales", "/api/v1/regions/sales?city_type=Tier%201"),
+            ("regions.choropleth", "/api/v1/regions/choropleth"),
             (
-                "payments.installments-distribution",
-                "GET",
-                "/api/v1/payments/installments-distribution",
+                "regions.shipping-performance",
+                "/api/v1/regions/shipping-performance?date_from=2023-01-01",
             ),
-            ("reviews.score-distribution", "GET", "/api/v1/reviews/score-distribution"),
-            ("reviews.trends", "GET", "/api/v1/reviews/trends"),
-            ("reviews.nlp-summary", "GET", "/api/v1/reviews/nlp-summary"),
-            (
-                "analytics.correlation-matrix",
-                "GET",
-                "/api/v1/analytics/correlation-matrix",
-            ),
-            ("analytics.hypothesis-tests", "GET", "/api/v1/analytics/hypothesis-tests"),
-            (
-                "analytics.descriptive-stats",
-                "GET",
-                "/api/v1/analytics/descriptive-stats",
-            ),
-            ("analytics.seasonality", "GET", "/api/v1/analytics/seasonality"),
-            ("classification.model-info", "GET", "/api/v1/classification/model-info"),
-            ("classification.metrics", "GET", "/api/v1/classification/metrics"),
+            ("analytics.correlation-matrix", "/api/v1/analytics/correlation-matrix"),
+            ("analytics.hypothesis-tests", "/api/v1/analytics/hypothesis-tests"),
+            ("analytics.broad-screen", "/api/v1/analytics/broad-screen"),
+            ("analytics.descriptive-stats", "/api/v1/analytics/descriptive-stats"),
+            ("analytics.seasonality", "/api/v1/analytics/seasonality"),
+            ("classification.model-info", "/api/v1/classification/model-info"),
+            ("classification.metrics", "/api/v1/classification/metrics"),
             (
                 "classification.feature-importance",
-                "GET",
                 "/api/v1/classification/feature-importance",
             ),
-            ("recommendations", "GET", "/api/v1/recommendations"),
-            ("admin.settings.get", "GET", "/api/v1/admin/settings"),
-            ("admin.data-refresh-status", "GET", "/api/v1/admin/data-refresh-status"),
+            ("recommendations", "/api/v1/recommendations"),
+            ("admin.settings.get", "/api/v1/admin/settings"),
+            ("admin.data-refresh-status", "/api/v1/admin/data-refresh-status"),
         ]
-        for name, method, path in endpoints:
-            await call(name, method, path)
-        await call(
-            "classification.predict",
+        for name, path in endpoints:
+            await call(name, "GET", path)
+
+        prediction = await call(
+            "classification.predict.m6-example",
             "POST",
             "/api/v1/classification/predict",
             json=prediction_payload(),
         )
+        predicted = prediction.json()["data"]
+        if predicted["model_id"] != 4:
+            raise RuntimeError(
+                f"Expected active model_id=4, got {predicted['model_id']}"
+            )
+        if predicted["predicted_label"] != "high_profit_order":
+            raise RuntimeError(f"M6 example label drifted: {predicted}")
+        expected_probability = 0.8327976187991819
+        if abs(predicted["predicted_probability"] - expected_probability) > 1e-12:
+            raise RuntimeError(f"M6 example probability drifted: {predicted}")
+
         settings = (await client.get("/api/v1/admin/settings")).json()["data"]
         await call(
             "admin.settings.put",
@@ -185,41 +153,25 @@ async def run() -> None:
             json=settings,
         )
 
-        performance_paths = {
-            "dashboard.summary": "/api/v1/dashboard/summary",
-            "dashboard.revenue-trend": "/api/v1/dashboard/revenue-trend",
-            "dashboard.top-categories": "/api/v1/dashboard/top-categories?limit=10",
-            "dashboard.top-sellers": "/api/v1/dashboard/top-sellers?limit=10",
-            "customers.segments": "/api/v1/customers/segments",
-            "customers.rfm": "/api/v1/customers/rfm?page=1&page_size=50",
-            "customers.clv-distribution": "/api/v1/customers/clv-distribution",
-            "customers.repeat-purchase-rate": "/api/v1/customers/repeat-purchase-rate",
-            "products.performance": "/api/v1/products/performance",
-            "sellers.performance": "/api/v1/sellers/performance",
-            "regions.sales": "/api/v1/regions/sales",
-            "regions.geo": "/api/v1/regions/geo",
-            "regions.delivery-performance": "/api/v1/regions/delivery-performance",
-            "payments.method-mix": "/api/v1/payments/method-mix",
-            "reviews.score-distribution": "/api/v1/reviews/score-distribution",
-            "reviews.trends": "/api/v1/reviews/trends",
-            "analytics.seasonality": "/api/v1/analytics/seasonality",
+        retired_paths = {
+            "sellers": "/api/v1/sellers/performance",
+            "payments": "/api/v1/payments/method-mix",
+            "reviews": "/api/v1/reviews/score-distribution",
         }
-        for name, path in performance_paths.items():
-            await client.get(path)
-            samples: list[float] = []
-            for _ in range(20):
-                started = time.perf_counter()
-                response = await client.get(path)
-                response.raise_for_status()
-                samples.append((time.perf_counter() - started) * 1000)
-            timings[name] = samples
+        for retired, path in retired_paths.items():
+            await call(
+                f"retired.{retired}.404",
+                "GET",
+                path,
+                expected=404,
+            )
 
     print(f"ENDPOINTS_VERIFIED={len(results)}")
     for name, status, elapsed_ms in results:
         print(f"ENDPOINT {name} status={status} elapsed_ms={elapsed_ms:.2f}")
-    for name, samples in timings.items():
-        p95 = statistics.quantiles(samples, n=20, method="inclusive")[18]
-        print(f"PERFORMANCE {name} p95_ms={p95:.2f} max_ms={max(samples):.2f}")
+    print(
+        "M6_PREDICTION model_id=4 label=high_profit_order confidence=0.8327976187991819"
+    )
 
 
 if __name__ == "__main__":

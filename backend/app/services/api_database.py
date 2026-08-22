@@ -46,14 +46,15 @@ def where_clause(
     for name in (
         "date_from",
         "date_to",
+        "region",
         "state",
-        "city",
+        "city_type",
         "category",
-        "seller_id",
-        "payment_type",
-        "customer_segment",
-        "review_score_min",
-        "review_score_max",
+        "sub_category",
+        "segment",
+        "ship_mode",
+        "order_value_tier",
+        "discount_band",
     ):
         value = getattr(filters, name, None)
         if value is None:
@@ -65,13 +66,7 @@ def where_clause(
                 f"Filter '{name}' is not supported by this endpoint.",
             )
         column = aliases.get(name, name)
-        operator = (
-            ">="
-            if name in {"date_from", "review_score_min"}
-            else "<="
-            if name in {"date_to", "review_score_max"}
-            else "="
-        )
+        operator = ">=" if name == "date_from" else "<=" if name == "date_to" else "="
         values.append(value)
         clauses.append(f"{column} {operator} ${len(values)}")
     return (" WHERE " + " AND ".join(clauses) if clauses else "", values)

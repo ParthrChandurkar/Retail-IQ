@@ -17,11 +17,13 @@ from app.ml.features import request_frame
 _bundle_cache: dict[int, dict[str, Any]] = {}
 
 
-def label_and_confidence(predicted: int, probability_low: float) -> tuple[str, float]:
-    """Apply Addendum v1.4 confidence-in-the-returned-label semantics."""
+def label_and_confidence(
+    predicted: int, probability_high_profit: float
+) -> tuple[str, float]:
+    """Return the migrated literal label and confidence in that label."""
     if predicted == 1:
-        return "low_satisfaction", probability_low
-    return "high_satisfaction", 1.0 - probability_low
+        return "high_profit_order", probability_high_profit
+    return "standard_profit_order", 1.0 - probability_high_profit
 
 
 async def active_model_row() -> dict[str, Any]:
@@ -39,6 +41,12 @@ async def active_model_row() -> dict[str, Any]:
             503, "model_unavailable", "No active classification model is registered."
         )
     result = dict(row)
+    if result["target_variable"] != "is_high_profit_order":
+        raise APIError(
+            503,
+            "retired_model_active",
+            "The active registry row is not the migrated high-profit model.",
+        )
     if isinstance(result["metrics_json"], str):
         result["metrics_json"] = json.loads(result["metrics_json"])
     return result
@@ -65,20 +73,24 @@ async def active_bundle() -> tuple[dict[str, Any], dict[str, Any]]:
             raise APIError(
                 503, "invalid_model_artifact", "The active artifact is invalid."
             )
+        if int(bundle.get("model_id", -1)) != model_id:
+            raise APIError(503, "invalid_model_artifact", "Artifact model ID mismatch.")
+        if bundle.get("target_variable") != "is_high_profit_order":
+            raise APIError(503, "retired_model_artifact", "Olist artifact is retired.")
         _bundle_cache.clear()
         _bundle_cache[model_id] = bundle
     return row, _bundle_cache[model_id]
 
 
-async def predict_satisfaction(payload: dict[str, Any]) -> dict[str, Any]:
+async def predict_high_profit(payload: dict[str, Any]) -> dict[str, Any]:
     row, bundle = await active_bundle()
     pipeline = bundle["pipeline"]
     if not isinstance(pipeline, Pipeline):
         raise APIError(503, "invalid_model_artifact", "The active pipeline is invalid.")
     inputs = request_frame(payload)
     predicted = int(pipeline.predict(inputs)[0])
-    probability_low = float(positive_probability(pipeline, inputs)[0])
-    label, confidence = label_and_confidence(predicted, probability_low)
+    probability_high_profit = float(positive_probability(pipeline, inputs)[0])
+    label, confidence = label_and_confidence(predicted, probability_high_profit)
     connection = await connect()
     try:
         await connection.execute(
@@ -94,7 +106,7 @@ async def predict_satisfaction(payload: dict[str, Any]) -> dict[str, Any]:
         await connection.close()
     return {
         "model_id": int(row["model_id"]),
-        "target_variable": "low_satisfaction",
+        "target_variable": "is_high_profit_order",
         "predicted_label": label,
         "predicted_probability": confidence,
         "top_global_features": bundle["top_global_features"][:10],

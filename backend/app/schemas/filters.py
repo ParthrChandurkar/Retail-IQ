@@ -1,50 +1,49 @@
-"""Shared SRS §9.6 filter and pagination models."""
+"""Shared migrated filter and pagination models."""
 
 from datetime import date
 
 from fastapi import Query
-from pydantic import BaseModel, Field, model_validator
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 
 class SharedFilters(BaseModel):
-    """All shared dashboard filters in one validated value object."""
+    """The M2 mart/filter contract represented as one validated value object."""
+
+    model_config = ConfigDict(extra="forbid")
 
     date_from: date | None = None
     date_to: date | None = None
+    region: str | None = None
     state: str | None = None
-    city: str | None = None
+    city_type: str | None = None
     category: str | None = None
-    seller_id: str | None = None
-    payment_type: str | None = None
-    customer_segment: str | None = None
-    review_score_min: int | None = Field(default=None, ge=1, le=5)
-    review_score_max: int | None = Field(default=None, ge=1, le=5)
+    sub_category: str | None = None
+    segment: str | None = None
+    ship_mode: str | None = None
+    order_value_tier: str | None = None
+    discount_band: str | None = None
 
     @model_validator(mode="after")
     def validate_ranges(self) -> "SharedFilters":
-        """Reject inverted ranges and ambiguous city-only geography."""
         if self.date_from and self.date_to and self.date_from > self.date_to:
             raise ValueError("date_from must be on or before date_to")
-        if self.review_score_min and self.review_score_max:
-            if self.review_score_min > self.review_score_max:
-                raise ValueError("review_score_min must not exceed review_score_max")
-        if self.city and not self.state:
-            raise ValueError("city requires state")
         return self
 
     def active_dimensions(self) -> set[str]:
-        """Return non-date filter names supplied by the caller."""
+        """Return non-date filters supplied by the caller."""
         return {
             name
             for name in (
+                "region",
                 "state",
-                "city",
+                "city_type",
                 "category",
-                "seller_id",
-                "payment_type",
-                "customer_segment",
-                "review_score_min",
-                "review_score_max",
+                "sub_category",
+                "segment",
+                "ship_mode",
+                "order_value_tier",
+                "discount_band",
             )
             if getattr(self, name) is not None
         }
@@ -53,28 +52,33 @@ class SharedFilters(BaseModel):
 def get_shared_filters(
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
-    state: str | None = Query(default=None, min_length=2, max_length=2),
-    city: str | None = Query(default=None),
+    region: str | None = Query(default=None),
+    state: str | None = Query(default=None),
+    city_type: str | None = Query(default=None),
     category: str | None = Query(default=None),
-    seller_id: str | None = Query(default=None),
-    payment_type: str | None = Query(default=None),
-    customer_segment: str | None = Query(default=None),
-    review_score_min: int | None = Query(default=None, ge=1, le=5),
-    review_score_max: int | None = Query(default=None, ge=1, le=5),
+    sub_category: str | None = Query(default=None),
+    segment: str | None = Query(default=None),
+    ship_mode: str | None = Query(default=None),
+    order_value_tier: str | None = Query(default=None),
+    discount_band: str | None = Query(default=None),
 ) -> SharedFilters:
-    """Build the shared filter object as a FastAPI dependency."""
-    return SharedFilters(
-        date_from=date_from,
-        date_to=date_to,
-        state=state,
-        city=city,
-        category=category,
-        seller_id=seller_id,
-        payment_type=payment_type,
-        customer_segment=customer_segment,
-        review_score_min=review_score_min,
-        review_score_max=review_score_max,
-    )
+    """Build the shared migrated filter object as a FastAPI dependency."""
+    try:
+        return SharedFilters(
+            date_from=date_from,
+            date_to=date_to,
+            region=region,
+            state=state,
+            city_type=city_type,
+            category=category,
+            sub_category=sub_category,
+            segment=segment,
+            ship_mode=ship_mode,
+            order_value_tier=order_value_tier,
+            discount_band=discount_band,
+        )
+    except ValidationError as error:
+        raise RequestValidationError(error.errors()) from error
 
 
 class Pagination(BaseModel):
@@ -85,7 +89,6 @@ class Pagination(BaseModel):
 
     @property
     def offset(self) -> int:
-        """Return the SQL offset represented by this page."""
         return (self.page - 1) * self.page_size
 
 
@@ -93,5 +96,4 @@ def get_pagination(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ) -> Pagination:
-    """Build pagination controls as a FastAPI dependency."""
     return Pagination(page=page, page_size=page_size)

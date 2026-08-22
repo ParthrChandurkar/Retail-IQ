@@ -9,9 +9,16 @@ def revenue_trend_mart(filters: SharedFilters) -> tuple[str, tuple[str, ...]]:
     if not dimensions:
         return "marts.revenue_daily", ()
     families = [
-        ({"category"}, "marts.revenue_by_category", ("category",)),
-        ({"state", "city"}, "marts.revenue_by_region", ("state", "city")),
-        ({"seller_id"}, "marts.seller_performance", ("seller_id",)),
+        (
+            {"category", "sub_category"},
+            "marts.revenue_by_category",
+            ("category", "sub_category"),
+        ),
+        (
+            {"region", "state", "city_type"},
+            "marts.revenue_by_region",
+            ("region", "state", "city_type"),
+        ),
     ]
     for allowed, table, supported in families:
         if dimensions <= allowed:
@@ -19,5 +26,5 @@ def revenue_trend_mart(filters: SharedFilters) -> tuple[str, tuple[str, ...]]:
     raise APIError(
         400,
         "unsupported_filter_combination",
-        "Revenue trend accepts one of category, geography, or seller filter families; payment value is not revenue.",
+        "Revenue trend accepts either the category/sub-category family or the trusted region/state/city-type family.",
     )

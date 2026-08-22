@@ -8,6 +8,7 @@ from app.core.dependencies import CurrentUser
 from app.schemas.common import DataResponse
 from app.schemas.filters import SharedFilters, get_shared_filters
 from app.services.api_database import fetch_all, where_clause
+from app.services.eda_service import analysis_frame, categorical_numeric_screen
 from app.services.stats_service import (
     correlation_and_covariance,
     descriptive_statistics,
@@ -38,6 +39,15 @@ async def hypothesis_tests(
     _validate_unfiltered(filters)
     result = await run_statistical_analysis()
     return DataResponse(data=result["hypothesis_tests"])
+
+
+@router.get("/broad-screen", response_model=DataResponse[dict[str, Any]])
+async def broad_screen(
+    filters: Filters, _: CurrentUser
+) -> DataResponse[dict[str, Any]]:
+    """Expose the complete M3 categorical×numeric screen and field findings."""
+    _validate_unfiltered(filters)
+    return DataResponse(data=categorical_numeric_screen(await analysis_frame()))
 
 
 @router.get("/descriptive-stats", response_model=DataResponse[list[dict[str, Any]]])

@@ -1,4 +1,4 @@
-"""Typed Phase 5 domain payloads exposed through OpenAPI."""
+"""Typed migrated domain payloads exposed through OpenAPI."""
 
 from datetime import date, datetime
 from decimal import Decimal
@@ -11,9 +11,12 @@ class DashboardSummary(BaseModel):
     period_start: date
     period_end: date
     total_revenue: Decimal
+    total_profit: Decimal
     total_orders: int
     total_customers: int
     average_order_value: Decimal
+    avg_discount_pct: Decimal
+    profit_margin_pct: Decimal
     revenue_mom_growth_pct: Decimal | None
     revenue_yoy_growth_pct: Decimal | None
 
@@ -21,6 +24,7 @@ class DashboardSummary(BaseModel):
 class RevenuePoint(BaseModel):
     date: date
     revenue: Decimal
+    total_profit: Decimal
     order_count: int
     customer_count: int
 
@@ -28,31 +32,51 @@ class RevenuePoint(BaseModel):
 class PerformanceRow(BaseModel):
     key: str
     revenue: Decimal
+    total_profit: Decimal
     order_count: int
-    units: int | None = None
-    average_review_score: Decimal | None = None
+    units: int
+    avg_discount_pct: Decimal
+    profit_margin_pct: Decimal
 
 
-class CustomerRow(BaseModel):
-    customer_unique_id: str
-    first_order_ts: datetime | None
-    last_order_ts: datetime | None
+class DiscountProfitRow(BaseModel):
+    category: str
+    sub_category: str
+    discount_band: str
     order_count: int
-    total_spend: Decimal
-    primary_state: str | None
-    primary_city: str | None
-    recency_score: int
-    frequency_score: int
-    monetary_score: int
-    rfm_segment: str
-    clv_historical: Decimal
+    revenue: Decimal
+    total_profit: Decimal
+    avg_discount_pct: Decimal
+    avg_profit_margin_pct: Decimal
+
+
+class CustomerProfile(BaseModel):
+    customer_id: str
+    order_date: date
+    recency_days: int
+    order_value: Decimal
+    profit: Decimal
+    discount_pct: Decimal
+    segment: str
+    city_type: str
+    region: str
+    state: str
+    order_value_tier: str
+
+
+class CustomerDetail(CustomerProfile):
+    first_name: str
+    last_name: str
 
 
 class SegmentRow(BaseModel):
     segment: str
+    order_value_tier: str
+    city_type: str
     customer_count: int
-    avg_clv: Decimal
-    avg_order_count: Decimal
+    avg_order_value: Decimal
+    avg_profit: Decimal
+    avg_discount_pct: Decimal
 
 
 class DistributionRow(BaseModel):
@@ -60,63 +84,29 @@ class DistributionRow(BaseModel):
     count: int
 
 
-class RepeatPurchase(BaseModel):
-    total_customers: int
-    repeat_customers: int
-    repeat_purchase_rate_pct: Decimal
-
-
-class ProductDetail(BaseModel):
-    product_id: str
-    category: str | None
-    revenue: Decimal
-    units: int
-    order_count: int
-
-
-class SellerDetail(BaseModel):
-    seller_id: str
-    city: str | None
-    state: str | None
-    revenue: Decimal
-    order_count: int
-    units: int
-    average_review_score: Decimal | None
-
-
 class RegionRow(BaseModel):
     state: str
-    city: str | None = None
+    region: str
+    city_type: str | None = None
     revenue: Decimal
+    total_profit: Decimal
     order_count: int
     customer_count: int
-    latitude: float | None = None
-    longitude: float | None = None
+    avg_discount_pct: Decimal
+    profit_margin_pct: Decimal
+    latitude: float
+    longitude: float
 
 
-class DeliveryRow(BaseModel):
-    state: str | None
-    city: str | None
+class ShippingRow(BaseModel):
+    date: date
+    ship_mode: str
+    region: str
     order_count: int
-    delivered_count: int
-    late_count: int
-    late_rate_pct: Decimal
-    avg_delivery_days: Decimal | None
-
-
-class PaymentRow(BaseModel):
-    payment_type: str
-    payment_count: int
-    order_count: int
-    payment_value: Decimal
-    avg_installments: Decimal | None
-
-
-class ReviewRow(BaseModel):
-    key: str
-    review_count: int
-    average_review_score: Decimal
-    comments_with_text: int
+    avg_shipping_days: Decimal
+    median_shipping_days: Decimal
+    min_shipping_days: int
+    max_shipping_days: int
 
 
 class AnalyticsPayload(BaseModel):

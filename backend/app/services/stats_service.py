@@ -153,14 +153,6 @@ async def t_test_margin_by_discount() -> dict[str, Any]:
     }
 
 
-async def t_test_review_late() -> dict[str, Any]:
-    """Reject the retired review-era test until recommendation routing is migrated."""
-    raise RuntimeError(
-        "Review-score testing is not applicable to Indian Store Data; "
-        "the recommendation service is scheduled for Migration M6."
-    )
-
-
 async def run_statistical_analysis() -> dict[str, Any]:
     """Compute the complete Migration M3 statistical evidence package."""
     return {

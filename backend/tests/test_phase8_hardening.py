@@ -56,9 +56,7 @@ def test_every_protected_operation_rejects_anonymous_access() -> None:
         ("/api/v1/auth/refresh", "post"),
     }
     replacements = {
-        "{customer_unique_id}": "customer-phase8",
-        "{product_id}": "product-phase8",
-        "{seller_id}": "seller-phase8",
+        "{customer_id}": "customer-phase8",
     }
     checked: list[str] = []
     for path, operations in schema["paths"].items():
@@ -72,20 +70,16 @@ def test_every_protected_operation_rejects_anonymous_access() -> None:
             if path == "/api/v1/classification/predict":
                 body = {
                     "entity_id": "audit",
-                    "total_price": 1,
-                    "total_freight": 0,
-                    "item_count": 1,
-                    "product_count": 1,
-                    "seller_count": 1,
-                    "average_item_price": 1,
-                    "maximum_item_price": 1,
-                    "customer_state": "SP",
-                    "seller_state": "SP",
-                    "dominant_category": "health",
-                    "primary_payment_type": "credit_card",
-                    "purchase_month": 1,
-                    "purchase_weekday": 1,
-                    "purchase_hour": 1,
+                    "sales": 46837.74,
+                    "discount_pct": 14.0,
+                    "category": "Sessional Fruits & Vegetables",
+                    "sub_category": "Carrots",
+                    "segment": "Corporate",
+                    "city_type": "Tier 2",
+                    "state": "Tamil Nadu",
+                    "region": "South",
+                    "order_month": 7,
+                    "order_dow": 7,
                 }
             elif path == "/api/v1/admin/settings":
                 body = {"settings": {}}
@@ -95,7 +89,7 @@ def test_every_protected_operation_rejects_anonymous_access() -> None:
             )
             assert response.json()["code"] == "not_authenticated"
             checked.append(f"{method.upper()} {path}")
-    assert len(checked) == 36
+    assert len(checked) == 27
 
 
 @pytest.mark.parametrize(
@@ -104,8 +98,12 @@ def test_every_protected_operation_rejects_anonymous_access() -> None:
         ("post", "/api/v1/auth/login", {"email": "bad", "password": "x"}),
         ("post", "/api/v1/classification/predict", {"entity_id": "x"}),
         ("put", "/api/v1/admin/settings", []),
-        ("get", "/api/v1/customers/rfm?page=0", None),
-        ("get", "/api/v1/dashboard/revenue-trend?review_score_min=0", None),
+        ("get", "/api/v1/customers/profiles?page=0", None),
+        (
+            "get",
+            "/api/v1/dashboard/revenue-trend?date_from=2023-01-02&date_to=2023-01-01",
+            None,
+        ),
     ],
 )
 def test_post_put_and_query_validation_errors(
@@ -118,12 +116,12 @@ def test_post_put_and_query_validation_errors(
 
 def test_parameterized_filter_and_pagination_sql() -> None:
     where, values = where_clause(
-        SharedFilters(date_from=date(2018, 1, 1), state="SP"),
+        SharedFilters(date_from=date(2019, 1, 1), state="Maharashtra"),
         ("date_from", "state"),
         aliases={"date_from": "date"},
     )
     assert where == " WHERE date >= $1 AND state = $2"
-    assert values == [date(2018, 1, 1), "SP"]
+    assert values == [date(2019, 1, 1), "Maharashtra"]
     assert pagination_sql(3, 20, values) == " LIMIT $3 OFFSET $4"
     assert values[-2:] == [20, 40]
 

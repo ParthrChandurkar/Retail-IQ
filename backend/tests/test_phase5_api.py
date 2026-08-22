@@ -40,20 +40,19 @@ def test_security_primitives_and_required_claims(
     ("filters", "table"),
     [
         (SharedFilters(), "marts.revenue_daily"),
-        (SharedFilters(category="health_beauty"), "marts.revenue_by_category"),
-        (SharedFilters(state="SP"), "marts.revenue_by_region"),
-        (SharedFilters(seller_id="seller"), "marts.seller_performance"),
+        (SharedFilters(category="Electronics"), "marts.revenue_by_category"),
+        (SharedFilters(sub_category="Phones"), "marts.revenue_by_category"),
+        (SharedFilters(state="Maharashtra"), "marts.revenue_by_region"),
+        (SharedFilters(city_type="Tier 1"), "marts.revenue_by_region"),
     ],
 )
 def test_revenue_trend_routing(filters: SharedFilters, table: str) -> None:
     assert revenue_trend_mart(filters)[0] == table
 
 
-def test_revenue_trend_rejects_cross_family_and_payment() -> None:
+def test_revenue_trend_rejects_cross_family() -> None:
     with pytest.raises(APIError):
-        revenue_trend_mart(SharedFilters(state="SP", category="health_beauty"))
-    with pytest.raises(APIError):
-        revenue_trend_mart(SharedFilters(payment_type="credit_card"))
+        revenue_trend_mart(SharedFilters(state="Maharashtra", category="Electronics"))
 
 
 def test_openapi_contains_complete_phase5_contract() -> None:
@@ -65,28 +64,20 @@ def test_openapi_contains_complete_phase5_contract() -> None:
         "/api/v1/auth/me",
         "/api/v1/dashboard/summary",
         "/api/v1/dashboard/revenue-trend",
-        "/api/v1/dashboard/top-products",
         "/api/v1/dashboard/top-categories",
-        "/api/v1/dashboard/top-sellers",
         "/api/v1/customers/segments",
-        "/api/v1/customers/rfm",
-        "/api/v1/customers/{customer_unique_id}",
-        "/api/v1/customers/clv-distribution",
-        "/api/v1/customers/repeat-purchase-rate",
+        "/api/v1/customers/profiles",
+        "/api/v1/customers/{customer_id}",
+        "/api/v1/customers/order-value-distribution",
         "/api/v1/products/performance",
         "/api/v1/products/categories",
-        "/api/v1/products/{product_id}",
-        "/api/v1/sellers/performance",
-        "/api/v1/sellers/{seller_id}",
+        "/api/v1/products/discount-profit",
         "/api/v1/regions/sales",
-        "/api/v1/regions/geo",
-        "/api/v1/regions/delivery-performance",
-        "/api/v1/payments/method-mix",
-        "/api/v1/payments/installments-distribution",
-        "/api/v1/reviews/score-distribution",
-        "/api/v1/reviews/trends",
+        "/api/v1/regions/choropleth",
+        "/api/v1/regions/shipping-performance",
         "/api/v1/analytics/correlation-matrix",
         "/api/v1/analytics/hypothesis-tests",
+        "/api/v1/analytics/broad-screen",
         "/api/v1/analytics/descriptive-stats",
         "/api/v1/analytics/seasonality",
         "/api/v1/classification/model-info",
@@ -98,7 +89,49 @@ def test_openapi_contains_complete_phase5_contract() -> None:
         "/api/v1/admin/data-refresh-status",
     }
     assert required <= schema["paths"].keys()
+    retired = {
+        path
+        for path in schema["paths"]
+        if path.startswith(("/api/v1/sellers", "/api/v1/payments", "/api/v1/reviews"))
+    }
+    assert retired == set()
     assert "HTTPBearer" in schema["components"]["securitySchemes"]
+
+    trend_parameters = {
+        parameter["name"]
+        for parameter in schema["paths"]["/api/v1/dashboard/revenue-trend"]["get"][
+            "parameters"
+        ]
+    }
+    assert {"city_type", "segment"} <= trend_parameters
+    assert {
+        "payment_type",
+        "seller_id",
+        "review_score_min",
+        "review_score_max",
+    }.isdisjoint(trend_parameters)
+
+
+def test_openapi_prediction_contract_is_the_m6_feature_contract() -> None:
+    client = TestClient(create_app(enable_database_bootstrap=False))
+    schema = client.get("/api/v1/openapi.json").json()
+    request = schema["components"]["schemas"]["PredictionRequest"]
+    assert set(request["required"]) == {
+        "entity_id",
+        "sales",
+        "discount_pct",
+        "category",
+        "sub_category",
+        "segment",
+        "city_type",
+        "state",
+        "region",
+        "order_month",
+        "order_dow",
+    }
+    response = schema["components"]["schemas"]["PredictionResult"]
+    label = response["properties"]["predicted_label"]
+    assert set(label["enum"]) == {"high_profit_order", "standard_profit_order"}
 
 
 def test_protected_endpoint_requires_bearer_token() -> None:

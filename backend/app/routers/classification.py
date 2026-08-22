@@ -15,7 +15,7 @@ from app.services.api_database import fetch_all
 from app.services.classification_service import (
     active_bundle,
     active_model_row,
-    predict_satisfaction,
+    predict_high_profit,
 )
 
 router = APIRouter(prefix="/api/v1/classification", tags=["classification"])
@@ -30,9 +30,12 @@ async def model_info(_: CurrentUser) -> DataResponse[ModelInfo]:
         "target_variable": row["target_variable"],
         "algorithm": row["algorithm"],
         "trained_at": row["trained_at"],
-        "positive_class": "low_satisfaction",
-        "negative_class": "high_satisfaction",
-        "prediction_probability_semantics": "Confidence in predicted_label; P(low) for low and 1-P(low) for high.",
+        "positive_class": "high_profit_order",
+        "negative_class": "standard_profit_order",
+        "prediction_probability_semantics": (
+            "Confidence in predicted_label: P(high_profit_order) when high; "
+            "1-P(high_profit_order) when standard."
+        ),
         "feature_columns": metadata["feature_columns"],
         "top_global_features": bundle["top_global_features"][:10],
     }
@@ -45,8 +48,8 @@ async def model_metrics(_: CurrentUser) -> DataResponse[ModelMetrics]:
     data = {
         "model_id": row["model_id"],
         "algorithm": row["algorithm"],
-        "positive_class": "low_satisfaction",
-        "negative_class": "high_satisfaction",
+        "positive_class": "high_profit_order",
+        "negative_class": "standard_profit_order",
         **row["metrics_json"],
     }
     data.pop("all_model_metrics", None)
@@ -70,5 +73,5 @@ async def feature_importance(_: CurrentUser) -> DataResponse[list[GlobalFeature]
 async def predict(
     body: PredictionRequest, _: CurrentUser
 ) -> DataResponse[PredictionResult]:
-    result = await predict_satisfaction(body.model_dump())
+    result = await predict_high_profit(body.model_dump())
     return DataResponse(data=PredictionResult.model_validate(result))

@@ -14,13 +14,7 @@ from app.routers.auth import router as auth_router
 from app.routers.classification import router as classification_router
 from app.routers.customers import router as customers_router
 from app.routers.dashboard import router as dashboard_router
-from app.routers.domains import (
-    payments_router,
-    products_router,
-    regions_router,
-    reviews_router,
-    sellers_router,
-)
+from app.routers.domains import products_router, regions_router
 from app.routers.health import router as health_router
 from app.routers.system import admin_router, recommendations_router
 
@@ -54,10 +48,7 @@ def create_app(*, enable_database_bootstrap: bool = True) -> FastAPI:
         dashboard_router,
         customers_router,
         products_router,
-        sellers_router,
         regions_router,
-        payments_router,
-        reviews_router,
         analytics_router,
         classification_router,
         recommendations_router,
