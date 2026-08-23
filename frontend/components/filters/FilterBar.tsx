@@ -14,14 +14,15 @@ import { Button, Input, Label } from "../ui";
 const queryNames: Record<FilterKey, string> = {
   dateFrom: "date_from",
   dateTo: "date_to",
+  region: "region",
   state: "state",
-  city: "city",
+  cityType: "city_type",
   category: "category",
-  sellerId: "seller_id",
-  paymentType: "payment_type",
-  customerSegment: "customer_segment",
-  reviewScoreMin: "review_score_min",
-  reviewScoreMax: "review_score_max",
+  subCategory: "sub_category",
+  segment: "segment",
+  shipMode: "ship_mode",
+  orderValueTier: "order_value_tier",
+  discountBand: "discount_band",
 };
 const allKeys = Object.keys(queryNames) as FilterKey[];
 function fieldsFor(pathname: string): FilterKey[] {
@@ -32,48 +33,43 @@ function fieldsFor(pathname: string): FilterKey[] {
   )
     return [];
   if (pathname.includes("customers"))
-    return ["state", "city", "customerSegment"];
+    return [
+      "dateFrom",
+      "dateTo",
+      "region",
+      "state",
+      "cityType",
+      "segment",
+      "orderValueTier",
+    ];
   if (pathname.includes("products"))
-    return ["dateFrom", "dateTo", "category", "sellerId"];
+    return ["dateFrom", "dateTo", "category", "subCategory", "discountBand"];
   if (pathname.includes("regional"))
-    return [
-      "dateFrom",
-      "dateTo",
-      "state",
-      "city",
-      "category",
-      "sellerId",
-      "paymentType",
-      "customerSegment",
-      "reviewScoreMin",
-      "reviewScoreMax",
-    ];
+    return ["dateFrom", "dateTo", "region", "state", "cityType", "shipMode"];
   if (pathname.includes("insights"))
-    return [
-      "dateFrom",
-      "dateTo",
-      "state",
-      "city",
-      "category",
-      "sellerId",
-      "paymentType",
-      "customerSegment",
-      "reviewScoreMin",
-      "reviewScoreMax",
-    ];
-  return ["dateFrom", "dateTo", "state", "city", "category", "sellerId"];
+    return ["category", "subCategory", "discountBand"];
+  return [
+    "dateFrom",
+    "dateTo",
+    "region",
+    "state",
+    "cityType",
+    "category",
+    "subCategory",
+  ];
 }
 const labels: Record<FilterKey, string> = {
   dateFrom: "From",
   dateTo: "To",
+  region: "Region",
   state: "State",
-  city: "City",
+  cityType: "City type",
   category: "Category",
-  sellerId: "Seller",
-  paymentType: "Payment",
-  customerSegment: "Segment",
-  reviewScoreMin: "Min review",
-  reviewScoreMax: "Max review",
+  subCategory: "Sub-category",
+  segment: "Segment",
+  shipMode: "Ship mode",
+  orderValueTier: "Order-value tier",
+  discountBand: "Discount band",
 };
 
 export function FilterBar() {
@@ -121,15 +117,7 @@ export function FilterBar() {
             <Label htmlFor={`filter-${key}`}>{labels[key]}</Label>
             <Input
               id={`filter-${key}`}
-              type={
-                key.startsWith("date")
-                  ? "date"
-                  : key.startsWith("review")
-                    ? "number"
-                    : "text"
-              }
-              min={key.startsWith("review") ? 1 : undefined}
-              max={key.startsWith("review") ? 5 : undefined}
+              type={key.startsWith("date") ? "date" : "text"}
               value={filters[key] ?? ""}
               onChange={(event) => set(key, event.target.value)}
               placeholder={labels[key]}
@@ -144,8 +132,8 @@ export function FilterBar() {
         <p className="mx-auto mt-2 max-w-[1600px] text-xs text-muted">
           Revenue trend route:{" "}
           <strong className="text-primary">{revenueSource(filters)}</strong>.
-          Category takes routing priority, then geography, then seller, matching
-          the mart-routing contract.
+          Category and trusted-geography filters select their governed marts;
+          unsupported cross-family combinations are not sent.
         </p>
       )}
     </section>

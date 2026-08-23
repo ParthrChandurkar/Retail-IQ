@@ -3,11 +3,17 @@
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Ref } from "react";
 import { useAuth } from "../providers/AuthProvider";
 import { Button } from "../ui";
 
-export function Topbar({ onMenu }: { onMenu: () => void }) {
+export function Topbar({
+  onMenu,
+  menuButtonRef,
+}: {
+  onMenu: () => void;
+  menuButtonRef?: Ref<HTMLButtonElement>;
+}) {
   const { resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -17,6 +23,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-[color:color-mix(in_srgb,var(--background)_88%,transparent)] px-4 backdrop-blur sm:px-6">
       <div className="flex items-center gap-2">
         <Button
+          ref={menuButtonRef}
           variant="ghost"
           className="p-2 lg:hidden"
           onClick={onMenu}

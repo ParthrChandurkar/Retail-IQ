@@ -1,6 +1,7 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { Repeat2, UserRoundCheck } from "lucide-react";
+import { Layers3, UserRoundCheck } from "lucide-react";
 import { CustomersService } from "../../../../src/generated/api";
 import {
   ChartCard,
@@ -20,94 +21,126 @@ import {
   formatPercent,
   titleCase,
 } from "../../../../lib/utils";
+
 export default function CustomersPage() {
-  const f = useFilterStore((s) => s.filters);
-  const p = customerFilters(f);
+  const filters = useFilterStore((state) => state.filters);
+  const applied = customerFilters(filters);
   const segments = useQuery({
-    queryKey: ["segments", p],
-    queryFn: async () =>
-      await CustomersService.segmentsApiV1CustomersSegmentsGet({
-        customerSegment: f.customerSegment,
+    queryKey: [
+      "segments",
+      applied.segment,
+      applied.cityType,
+      applied.orderValueTier,
+    ],
+    queryFn: () =>
+      CustomersService.segmentsApiV1CustomersSegmentsGet({
+        segment: applied.segment,
+        cityType: applied.cityType,
+        orderValueTier: applied.orderValueTier,
       }),
   });
-  const rfm = useQuery({
-    queryKey: ["rfm", p],
-    queryFn: async () =>
-      await CustomersService.rfmApiV1CustomersRfmGet({
-        ...p,
+  const profiles = useQuery({
+    queryKey: ["customer-profiles", applied],
+    queryFn: () =>
+      CustomersService.profilesApiV1CustomersProfilesGet({
+        ...applied,
         page: 1,
         pageSize: 40,
       }),
   });
-  const clv = useQuery({
-    queryKey: ["clv", p],
-    queryFn: async () =>
-      await CustomersService.clvDistributionApiV1CustomersClvDistributionGet(p),
-  });
-  const repeat = useQuery({
-    queryKey: ["repeat", p],
-    queryFn: async () =>
-      await CustomersService.repeatPurchaseApiV1CustomersRepeatPurchaseRateGet(
-        p,
+  const distribution = useQuery({
+    queryKey: ["order-value-distribution", applied],
+    queryFn: () =>
+      CustomersService.orderValueDistributionApiV1CustomersOrderValueDistributionGet(
+        applied,
       ),
   });
-  const failed = [segments, rfm, clv, repeat].find((q) => q.error);
+  const failed = [segments, profiles, distribution].find(
+    (query) => query.error,
+  );
   if (failed) return <ErrorState error={failed.error} />;
+  const tierCount = distribution.data?.data.length ?? 0;
   return (
     <>
       <PageHeader
         eyebrow="Customer analytics"
-        title="Segments, RFM & value"
-        description="The customer profile mart is the single source for RFM scores, rule-based segments, historical CLV, and repeat purchase behavior."
+        title="Cross-sectional customer profiles"
+        description="One order per customer means analysis is based on segment, city type, trusted geography, order value, profit, and discount—not longitudinal behavior."
       />
-      {repeat.data && (
+      {profiles.data && (
         <KPIGrid>
           <KPICard
             label="Profiled customers"
-            value={formatNumber(repeat.data.data.total_customers)}
-            detail="Delivered-order customers"
+            value={formatNumber(profiles.data.total)}
+            detail="One cross-sectional profile each"
             icon={UserRoundCheck}
           />
           <KPICard
-            label="Repeat customers"
-            value={formatNumber(repeat.data.data.repeat_customers)}
-            detail={`${formatPercent(repeat.data.data.repeat_purchase_rate_pct, 2)} repeat-purchase rate`}
-            icon={Repeat2}
+            label="Order-value tiers"
+            value={formatNumber(tierCount)}
+            detail="Data-derived quartiles"
+            icon={Layers3}
           />
         </KPIGrid>
       )}
       <div className="grid gap-4 xl:grid-cols-2">
         {segments.data && <SegmentDonut data={segments.data.data} />}
-        <ChartCard title="Historical CLV distribution">
-          {clv.data && (
+        <ChartCard title="Order-value distribution">
+          {distribution.data && (
             <DataTable
-              headers={["Decile", "Customers"]}
-              rows={clv.data.data.map((r) => [r.bucket, r.count])}
+              headers={["Order-value tier", "Customers"]}
+              rows={distribution.data.data.map((row) => [
+                titleCase(row.bucket),
+                formatNumber(row.count),
+              ])}
             />
           )}
         </ChartCard>
         <ChartCard
           className="xl:col-span-2"
-          title="Customer RFM profiles"
-          description="Highest historical spend first"
+          title="Segment × order-value tier × city type"
         >
-          {rfm.data && (
+          {segments.data && (
+            <DataTable
+              headers={[
+                "Segment",
+                "Order-value tier",
+                "City type",
+                "Customers",
+                "Average order value",
+                "Average profit",
+              ]}
+              rows={segments.data.data.map((row) => [
+                row.segment,
+                titleCase(row.order_value_tier),
+                row.city_type,
+                formatNumber(row.customer_count),
+                formatCurrency(row.avg_order_value),
+                formatCurrency(row.avg_profit),
+              ])}
+            />
+          )}
+        </ChartCard>
+        <ChartCard className="xl:col-span-2" title="Customer order profiles">
+          {profiles.data && (
             <DataTable
               headers={[
                 "Customer",
-                "State",
-                "Orders",
-                "Spend",
-                "R/F/M",
                 "Segment",
+                "City type",
+                "State",
+                "Order value",
+                "Profit",
+                "Discount",
               ]}
-              rows={rfm.data.data.map((r) => [
-                r.customer_unique_id.slice(0, 12),
-                r.primary_state ?? "—",
-                r.order_count,
-                formatCurrency(r.total_spend),
-                `${r.recency_score}/${r.frequency_score}/${r.monetary_score}`,
-                titleCase(r.rfm_segment),
+              rows={profiles.data.data.map((row) => [
+                row.customer_id,
+                row.segment,
+                row.city_type,
+                row.state,
+                formatCurrency(row.order_value),
+                formatCurrency(row.profit),
+                formatPercent(row.discount_pct, 1),
               ])}
             />
           )}

@@ -2,11 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { DataResponse_CustomerRow_ } from "../models/DataResponse_CustomerRow_";
+import type { DataResponse_CustomerDetail_ } from "../models/DataResponse_CustomerDetail_";
 import type { DataResponse_list_DistributionRow__ } from "../models/DataResponse_list_DistributionRow__";
 import type { DataResponse_list_SegmentRow__ } from "../models/DataResponse_list_SegmentRow__";
-import type { DataResponse_RepeatPurchase_ } from "../models/DataResponse_RepeatPurchase_";
-import type { PageResponse_CustomerRow_ } from "../models/PageResponse_CustomerRow_";
+import type { PageResponse_CustomerProfile_ } from "../models/PageResponse_CustomerProfile_";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
@@ -19,25 +18,27 @@ export class CustomersService {
   public static segmentsApiV1CustomersSegmentsGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_SegmentRow__> {
     return __request(OpenAPI, {
       method: "GET",
@@ -45,14 +46,15 @@ export class CustomersService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -60,51 +62,54 @@ export class CustomersService {
     });
   }
   /**
-   * Rfm
-   * @returns PageResponse_CustomerRow_ Successful Response
+   * Profiles
+   * @returns PageResponse_CustomerProfile_ Successful Response
    * @throws ApiError
    */
-  public static rfmApiV1CustomersRfmGet({
+  public static profilesApiV1CustomersProfilesGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
     page = 1,
     pageSize = 50,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
     page?: number;
     pageSize?: number;
-  }): CancelablePromise<PageResponse_CustomerRow_> {
+  }): CancelablePromise<PageResponse_CustomerProfile_> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/customers/rfm",
+      url: "/api/v1/customers/profiles",
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
         page: page,
         page_size: pageSize,
       },
@@ -114,95 +119,50 @@ export class CustomersService {
     });
   }
   /**
-   * Clv Distribution
+   * Order Value Distribution
    * @returns DataResponse_list_DistributionRow__ Successful Response
    * @throws ApiError
    */
-  public static clvDistributionApiV1CustomersClvDistributionGet({
+  public static orderValueDistributionApiV1CustomersOrderValueDistributionGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_DistributionRow__> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/customers/clv-distribution",
+      url: "/api/v1/customers/order-value-distribution",
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
-      },
-      errors: {
-        422: `Validation Error`,
-      },
-    });
-  }
-  /**
-   * Repeat Purchase
-   * @returns DataResponse_RepeatPurchase_ Successful Response
-   * @throws ApiError
-   */
-  public static repeatPurchaseApiV1CustomersRepeatPurchaseRateGet({
-    dateFrom,
-    dateTo,
-    state,
-    city,
-    category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
-  }: {
-    dateFrom?: string | null;
-    dateTo?: string | null;
-    state?: string | null;
-    city?: string | null;
-    category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
-  }): CancelablePromise<DataResponse_RepeatPurchase_> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/customers/repeat-purchase-rate",
-      query: {
-        date_from: dateFrom,
-        date_to: dateTo,
-        state: state,
-        city: city,
-        category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -211,19 +171,19 @@ export class CustomersService {
   }
   /**
    * Customer Detail
-   * @returns DataResponse_CustomerRow_ Successful Response
+   * @returns DataResponse_CustomerDetail_ Successful Response
    * @throws ApiError
    */
-  public static customerDetailApiV1CustomersCustomerUniqueIdGet({
-    customerUniqueId,
+  public static customerDetailApiV1CustomersCustomerIdGet({
+    customerId,
   }: {
-    customerUniqueId: string;
-  }): CancelablePromise<DataResponse_CustomerRow_> {
+    customerId: string;
+  }): CancelablePromise<DataResponse_CustomerDetail_> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/customers/{customer_unique_id}",
+      url: "/api/v1/customers/{customer_id}",
       path: {
-        customer_unique_id: customerUniqueId,
+        customer_id: customerId,
       },
       errors: {
         422: `Validation Error`,

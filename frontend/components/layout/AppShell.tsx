@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import { useAuth } from "../providers/AuthProvider";
 import { Button, Skeleton } from "../ui";
@@ -48,6 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { collapsed, toggle } = useShell();
   const [mobile, setMobile] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (ready && !user)
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
@@ -88,12 +89,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           />
         </Button>
       </aside>
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => menuButtonRef.current?.focus()}>
         {mobile && (
           <motion.aside
             initial={{ x: -260 }}
             animate={{ x: 0 }}
             exit={{ x: -260 }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
             className="fixed inset-y-0 left-0 z-50 w-72 border-r bg-surface lg:hidden"
           >
             <Button
@@ -118,13 +120,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           collapsed ? "lg:pl-16" : "lg:pl-60",
         )}
       >
-        <Topbar onMenu={() => setMobile(true)} />
+        <Topbar onMenu={() => setMobile(true)} menuButtonRef={menuButtonRef} />
         <FilterBar />
         <motion.main
           key={pathname}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={{ duration: 0.12 }}
           className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8"
         >
           {children}

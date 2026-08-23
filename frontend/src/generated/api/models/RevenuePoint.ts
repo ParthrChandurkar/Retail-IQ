@@ -5,6 +5,7 @@
 export type RevenuePoint = {
   date: string;
   revenue: string;
+  total_profit: string;
   order_count: number;
   customer_count: number;
 };

@@ -5,14 +5,15 @@ import { create } from "zustand";
 export type FilterKey =
   | "dateFrom"
   | "dateTo"
+  | "region"
   | "state"
-  | "city"
+  | "cityType"
   | "category"
-  | "sellerId"
-  | "paymentType"
-  | "customerSegment"
-  | "reviewScoreMin"
-  | "reviewScoreMax";
+  | "subCategory"
+  | "segment"
+  | "shipMode"
+  | "orderValueTier"
+  | "discountBand";
 export type Filters = Partial<Record<FilterKey, string>>;
 const empty: Filters = {};
 type Store = {
@@ -43,41 +44,43 @@ export const dateFilters = (f: Filters) => ({
 export const revenueFilters = (f: Filters) => ({
   ...dateFilters(f),
   ...(f.category
-    ? { category: f.category }
-    : f.state
-      ? { state: f.state, city: f.city }
-      : f.sellerId
-        ? { sellerId: f.sellerId }
-        : {}),
+    ? { category: f.category, subCategory: f.subCategory }
+    : f.region || f.state || f.cityType
+      ? { region: f.region, state: f.state, cityType: f.cityType }
+      : {}),
 });
 export const revenueSource = (f: Filters) =>
   f.category
-    ? "category mart"
-    : f.state
-      ? "regional mart"
-      : f.sellerId
-        ? "seller mart"
-        : "daily mart";
+    ? "category and sub-category mart"
+    : f.region || f.state || f.cityType
+      ? "trusted geography mart"
+      : "daily mart";
 export const categoryFilters = (f: Filters) => ({
   ...dateFilters(f),
   category: f.category,
-});
-export const sellerFilters = (f: Filters) => ({
-  ...dateFilters(f),
-  sellerId: f.sellerId,
+  subCategory: f.subCategory,
 });
 export const regionFilters = (f: Filters) => ({
   ...dateFilters(f),
+  region: f.region,
   state: f.state,
-  city: f.city,
+  cityType: f.cityType,
 });
 export const customerFilters = (f: Filters) => ({
+  ...dateFilters(f),
+  region: f.region,
   state: f.state,
-  city: f.city,
-  customerSegment: f.customerSegment,
+  cityType: f.cityType,
+  segment: f.segment,
+  orderValueTier: f.orderValueTier,
 });
-export const reviewFilters = (f: Filters) => ({
-  ...f,
-  reviewScoreMin: f.reviewScoreMin ? Number(f.reviewScoreMin) : undefined,
-  reviewScoreMax: f.reviewScoreMax ? Number(f.reviewScoreMax) : undefined,
+export const discountFilters = (f: Filters) => ({
+  category: f.category,
+  subCategory: f.subCategory,
+  discountBand: f.discountBand,
+});
+export const shippingFilters = (f: Filters) => ({
+  ...dateFilters(f),
+  region: f.region,
+  shipMode: f.shipMode,
 });

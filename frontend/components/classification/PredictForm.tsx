@@ -1,4 +1,5 @@
 "use client";
+
 import { useMutation } from "@tanstack/react-query";
 import { BrainCircuit } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -9,70 +10,57 @@ import {
 import { titleCase } from "../../lib/utils";
 import { Badge, Button, Card, Input, Label } from "../ui";
 
-const fields = [
-  "entity_id",
-  "total_price",
-  "total_freight",
-  "item_count",
-  "product_count",
-  "seller_count",
-  "average_item_price",
-  "maximum_item_price",
-  "freight_ratio",
-  "payment_value",
-  "payment_installments",
-  "delivery_days",
-  "delivery_delay_hours",
-  "is_late",
-  "approval_hours",
-  "carrier_handling_hours",
-  "estimated_delivery_days",
-  "shipping_limit_slack_days",
-  "seller_distance_km",
-  "average_product_weight_g",
-  "average_product_volume_cm3",
-  "customer_state",
-  "seller_state",
-  "dominant_category",
-  "primary_payment_type",
-  "purchase_month",
-  "purchase_weekday",
-  "purchase_hour",
+const featureFields = [
+  "sales",
+  "discount_pct",
+  "category",
+  "sub_category",
+  "segment",
+  "city_type",
+  "state",
+  "region",
+  "order_month",
+  "order_dow",
 ] as const satisfies readonly (keyof PredictionRequest)[];
-type MissingFields = Exclude<keyof PredictionRequest, (typeof fields)[number]>;
-const schemaIsComplete: MissingFields extends never ? true : never = true;
-const textFields = new Set<keyof PredictionRequest>([
-  "entity_id",
-  "customer_state",
-  "seller_state",
-  "dominant_category",
-  "primary_payment_type",
+type MissingFields = Exclude<
+  keyof PredictionRequest,
+  "entity_id" | (typeof featureFields)[number]
+>;
+const featureSchemaIsComplete: MissingFields extends never ? true : never =
+  true;
+const numericFields = new Set<keyof PredictionRequest>([
+  "sales",
+  "discount_pct",
+  "order_month",
+  "order_dow",
 ]);
-const required = new Set<keyof PredictionRequest>([
-  "entity_id",
-  "total_price",
-  "total_freight",
-  "item_count",
-  "product_count",
-  "seller_count",
-  "average_item_price",
-  "maximum_item_price",
-  "customer_state",
-  "seller_state",
-  "dominant_category",
-  "primary_payment_type",
-  "purchase_month",
-  "purchase_weekday",
-  "purchase_hour",
-]);
+const choices: Partial<Record<keyof PredictionRequest, readonly string[]>> = {
+  segment: ["Consumer", "Corporate"],
+  city_type: ["Tier 1", "Tier 2", "Village"],
+  region: ["North", "South", "East", "West"],
+};
 
 export function PredictForm() {
-  void schemaIsComplete;
+  void featureSchemaIsComplete;
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<PredictionRequest>();
+  } = useForm<PredictionRequest>({
+    defaultValues: {
+      entity_id: "dashboard-order",
+      sales: 46837.74,
+      discount_pct: 14,
+      category: "Sessional Fruits & Vegetables",
+      sub_category: "Carrots",
+      segment: "Corporate",
+      city_type: "Tier 2",
+      state: "Tamil Nadu",
+      region: "South",
+      order_month: 7,
+      order_dow: 7,
+    },
+  });
   const prediction = useMutation({
     mutationFn: async (body: PredictionRequest) =>
       (
@@ -81,39 +69,69 @@ export function PredictForm() {
         })
       ).data,
   });
-  const submit = handleSubmit((body) => prediction.mutate(body));
   return (
     <Card>
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="font-semibold">Single-record prediction</h2>
+          <h2 className="font-semibold">Single-order prediction</h2>
           <p className="mt-1 text-xs text-muted">
-            Fields are compile-time bound to the generated OpenAPI
-            PredictionRequest.
+            Ten checkout features are compile-time bound to the generated M7
+            OpenAPI client. The audit identifier is metadata, not a model
+            feature.
           </p>
         </div>
         <BrainCircuit className="text-primary" />
       </div>
-      <form onSubmit={submit} className="mt-6">
+      <form
+        onSubmit={handleSubmit((body) => prediction.mutate(body))}
+        className="mt-6"
+      >
+        <div className="mb-3 max-w-sm">
+          <Label htmlFor="predict-entity_id">Audit identifier *</Label>
+          <Input
+            id="predict-entity_id"
+            {...register("entity_id", { required: true })}
+          />
+        </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {fields.map((field) => (
+          {featureFields.map((field) => (
             <div key={field}>
-              <Label htmlFor={`predict-${field}`}>
-                {titleCase(field)}
-                {required.has(field) ? " *" : ""}
-              </Label>
-              <Input
-                id={`predict-${field}`}
-                type={textFields.has(field) ? "text" : "number"}
-                step={textFields.has(field) ? undefined : "any"}
-                {...register(field, {
-                  required: required.has(field),
-                  setValueAs: textFields.has(field)
-                    ? undefined
-                    : (value: string) =>
-                        value === "" ? undefined : Number(value),
-                })}
-              />
+              <Label htmlFor={`predict-${field}`}>{titleCase(field)} *</Label>
+              {choices[field] ? (
+                <select
+                  id={`predict-${field}`}
+                  className="min-h-10 w-full rounded-control border bg-background px-3 text-sm text-ink focus:border-primary"
+                  {...register(field, { required: true })}
+                >
+                  {choices[field]!.map((choice) => (
+                    <option key={choice}>{choice}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  id={`predict-${field}`}
+                  type={numericFields.has(field) ? "number" : "text"}
+                  step={numericFields.has(field) ? "any" : undefined}
+                  min={
+                    field === "order_month" || field === "order_dow"
+                      ? 1
+                      : undefined
+                  }
+                  max={
+                    field === "order_month"
+                      ? 12
+                      : field === "order_dow"
+                        ? 7
+                        : undefined
+                  }
+                  {...register(field, {
+                    required: true,
+                    setValueAs: numericFields.has(field)
+                      ? (value: string) => Number(value)
+                      : undefined,
+                  })}
+                />
+              )}
               {errors[field] && (
                 <p className="mt-1 text-xs text-danger">
                   Required by the live schema
@@ -124,12 +142,11 @@ export function PredictForm() {
         </div>
         {prediction.error && (
           <p role="alert" className="mt-4 text-sm text-danger">
-            Prediction failed. Validate every required field and its numeric
-            range.
+            Prediction failed. Check every checkout value and try again.
           </p>
         )}
         <Button className="mt-5" disabled={prediction.isPending}>
-          {prediction.isPending ? "Scoring…" : "Predict satisfaction outcome"}
+          {prediction.isPending ? "Scoring…" : "Predict profit outcome"}
         </Button>
       </form>
       {prediction.data && (
@@ -148,18 +165,18 @@ export function PredictForm() {
             </div>
             <Badge
               tone={
-                prediction.data.predicted_label === "low_satisfaction"
-                  ? "danger"
-                  : "success"
+                prediction.data.predicted_label === "high_profit_order"
+                  ? "success"
+                  : "neutral"
               }
             >
               {Math.round(prediction.data.predicted_probability * 100)}%
-              confident: {prediction.data.predicted_label.replace("_", " ")}
+              confident: {prediction.data.predicted_label}
             </Badge>
           </div>
           <p className="mt-3 text-sm text-muted">
-            This percentage is confidence in the displayed outcome—not a fixed
-            probability of low satisfaction.
+            Confidence is for the displayed outcome: P(high-profit) when
+            high-profit is predicted, otherwise 1 − P(high-profit).
           </p>
         </div>
       )}

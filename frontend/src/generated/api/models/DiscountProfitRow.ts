@@ -2,12 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type PerformanceRow = {
-  key: string;
+export type DiscountProfitRow = {
+  category: string;
+  sub_category: string;
+  discount_band: string;
+  order_count: number;
   revenue: string;
   total_profit: string;
-  order_count: number;
-  units: number;
   avg_discount_pct: string;
-  profit_margin_pct: string;
+  avg_profit_margin_pct: string;
 };

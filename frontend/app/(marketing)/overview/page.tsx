@@ -17,19 +17,20 @@ export default function OverviewPage() {
           Analytics first. Machine learning where it adds business value.
         </h1>
         <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">
-          Built on the Brazilian Olist retail dataset, the platform follows the
-          complete data-science workflow from source understanding and cleaning
-          through statistical analysis, customer intelligence, model governance,
-          dashboards, and recommendations.
+          Built on Indian Store Data, the platform follows the complete
+          data-science workflow from source understanding and cleaning through
+          statistical analysis, customer intelligence, model governance,
+          dashboards, and recommendations across five years of orders.
         </p>
       </header>
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <Database className="text-primary" />
-          <h2 className="mt-5 font-semibold">Multi-source retail data</h2>
+          <h2 className="mt-5 font-semibold">Verified Indian retail data</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Nine source files integrated into raw, curated, marts, and ML
-            PostgreSQL schemas without fabricating missing business values.
+            One verified 100,000-row source is integrated into raw, curated,
+            marts, and ML PostgreSQL schemas without fabricating business
+            values.
           </p>
         </Card>
         <Card>
@@ -54,7 +55,7 @@ export default function OverviewPage() {
         <h2 className="font-semibold">System flow</h2>
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
           {[
-            "CSV sources",
+            "Indian Store Data CSV",
             "Raw fidelity",
             "Curated quality",
             "Analytics marts",

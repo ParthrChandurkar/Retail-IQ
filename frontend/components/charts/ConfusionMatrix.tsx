@@ -1,12 +1,13 @@
 import type { ModelMetrics } from "../../src/generated/api";
-import { Card } from "../ui";
 import { formatNumber, titleCase } from "../../lib/utils";
+import { Card } from "../ui";
 
 type MatrixRow = {
   actual_label: string;
-  low_satisfaction: number;
-  high_satisfaction: number;
+  high_profit_order: number;
+  standard_profit_order: number;
 };
+
 export function ConfusionMatrix({
   matrix,
 }: {
@@ -21,8 +22,8 @@ export function ConfusionMatrix({
       </p>
       <div className="mt-6 grid grid-cols-[9rem_repeat(2,minmax(0,1fr))] gap-2 text-center text-sm">
         <span />
-        <strong className="text-xs text-muted">Low satisfaction</strong>
-        <strong className="text-xs text-muted">High satisfaction</strong>
+        <strong className="text-xs text-muted">High-profit order</strong>
+        <strong className="text-xs text-muted">Standard-profit order</strong>
         {rows.flatMap((row) => [
           <strong
             key={`${row.actual_label}-label`}
@@ -31,16 +32,16 @@ export function ConfusionMatrix({
             {titleCase(row.actual_label)}
           </strong>,
           <div
-            key={`${row.actual_label}-low`}
+            key={`${row.actual_label}-high`}
             className="rounded-control bg-primary/15 p-5 font-mono text-xl text-primary"
           >
-            {formatNumber(row.low_satisfaction)}
+            {formatNumber(row.high_profit_order)}
           </div>,
           <div
-            key={`${row.actual_label}-high`}
+            key={`${row.actual_label}-standard`}
             className="rounded-control bg-accent/15 p-5 font-mono text-xl text-accent"
           >
-            {formatNumber(row.high_satisfaction)}
+            {formatNumber(row.standard_profit_order)}
           </div>,
         ])}
       </div>

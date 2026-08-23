@@ -1,13 +1,18 @@
 "use client";
+
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { RegionsService } from "../../../../src/generated/api";
-import { ChartCard, DataTable } from "../../../../components/charts/Charts";
+import {
+  ChartCard,
+  CityTypeComparison,
+  DataTable,
+} from "../../../../components/charts/Charts";
 import { PageHeader } from "../../../../components/layout/PageHeader";
 import { ErrorState } from "../../../../components/ui";
 import {
   regionFilters,
-  reviewFilters,
+  shippingFilters,
   useFilterStore,
 } from "../../../../lib/stores/filters";
 import {
@@ -15,84 +20,96 @@ import {
   formatNumber,
   formatPercent,
 } from "../../../../lib/utils";
-const RegionMap = dynamic(
-  () => import("../../../../components/maps/RegionMap"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="grid h-[28rem] place-items-center rounded-card bg-surface text-sm text-muted">
-        Loading geographic view…
-      </div>
-    ),
-  },
+
+const StateChoropleth = dynamic(
+  () => import("../../../../components/maps/StateChoropleth"),
+  { ssr: false },
 );
+
 export default function RegionalPage() {
-  const f = useFilterStore((s) => s.filters);
+  const filters = useFilterStore((state) => state.filters);
+  const geography = regionFilters(filters);
   const sales = useQuery({
-    queryKey: ["region-sales", regionFilters(f)],
-    queryFn: async () =>
-      await RegionsService.regionSalesApiV1RegionsSalesGet(regionFilters(f)),
+    queryKey: ["region-sales", geography],
+    queryFn: () => RegionsService.regionSalesApiV1RegionsSalesGet(geography),
   });
-  const geo = useQuery({
-    queryKey: ["region-geo", regionFilters(f)],
-    queryFn: async () =>
-      await RegionsService.regionGeoApiV1RegionsGeoGet(regionFilters(f)),
+  const choropleth = useQuery({
+    queryKey: ["region-choropleth", geography],
+    queryFn: () =>
+      RegionsService.regionChoroplethApiV1RegionsChoroplethGet(geography),
   });
-  const delivery = useQuery({
-    queryKey: ["delivery", reviewFilters(f)],
-    queryFn: async () =>
-      await RegionsService.deliveryPerformanceApiV1RegionsDeliveryPerformanceGet(
-        reviewFilters(f),
+  const shipping = useQuery({
+    queryKey: ["shipping", shippingFilters(filters)],
+    queryFn: () =>
+      RegionsService.shippingPerformanceApiV1RegionsShippingPerformanceGet(
+        shippingFilters(filters),
       ),
   });
-  const failed = [sales, geo, delivery].find((q) => q.error);
+  const failed = [sales, choropleth, shipping].find((query) => query.error);
   if (failed) return <ErrorState error={failed.error} />;
   return (
     <>
       <PageHeader
         eyebrow="Regional intelligence"
-        title="Geography & fulfillment"
-        description="Delivered revenue, customer density, and delivery performance by state and city, using purchase date as the shared filter axis."
+        title="Trusted geography & shipping"
+        description="State revenue uses the governed state-to-region reference. City type is shown as a first-class comparison, while shipping duration remains descriptive."
       />
       <div className="grid gap-4">
         <ChartCard
-          title="Sales geography"
-          description="Marker size reflects order volume; coordinates are median ZIP-prefix locations."
+          title="State-centroid choropleth"
+          description="Filled state tiles use a continuous revenue scale; customer points are never plotted."
         >
-          {geo.data && <RegionMap points={geo.data.data} />}
+          {choropleth.data && <StateChoropleth states={choropleth.data.data} />}
         </ChartCard>
         <div className="grid gap-4 xl:grid-cols-2">
+          {sales.data && <CityTypeComparison data={sales.data.data} />}
           <ChartCard title="Regional sales">
             {sales.data && (
               <DataTable
-                headers={["State", "City", "Revenue", "Orders", "Customers"]}
-                rows={sales.data.data.map((r) => [
-                  r.state,
-                  r.city ?? "All",
-                  formatCurrency(r.revenue),
-                  formatNumber(r.order_count),
-                  formatNumber(r.customer_count),
-                ])}
-              />
-            )}
-          </ChartCard>
-          <ChartCard title="Delivery performance">
-            {delivery.data && (
-              <DataTable
-                headers={["State", "City", "Orders", "Late rate", "Avg days"]}
-                rows={delivery.data.data.map((r) => [
-                  r.state ?? "All",
-                  r.city ?? "All",
-                  formatNumber(r.order_count),
-                  formatPercent(r.late_rate_pct, 2),
-                  r.avg_delivery_days
-                    ? Number(r.avg_delivery_days).toFixed(2)
-                    : "—",
+                headers={[
+                  "Region",
+                  "State",
+                  "City type",
+                  "Revenue",
+                  "Profit",
+                  "Margin",
+                ]}
+                rows={sales.data.data.map((row) => [
+                  row.region,
+                  row.state,
+                  row.city_type ?? "All",
+                  formatCurrency(row.revenue),
+                  formatCurrency(row.total_profit),
+                  formatPercent(row.profit_margin_pct, 2),
                 ])}
               />
             )}
           </ChartCard>
         </div>
+        <ChartCard title="Shipping-duration description">
+          {shipping.data && (
+            <DataTable
+              headers={[
+                "Date",
+                "Region",
+                "Ship mode",
+                "Orders",
+                "Average days",
+                "Median days",
+                "Range",
+              ]}
+              rows={shipping.data.data.map((row) => [
+                row.date,
+                row.region,
+                row.ship_mode,
+                formatNumber(row.order_count),
+                formatNumber(row.avg_shipping_days, 2),
+                formatNumber(row.median_shipping_days, 2),
+                `${row.min_shipping_days}–${row.max_shipping_days}`,
+              ])}
+            />
+          )}
+        </ChartCard>
       </div>
     </>
   );

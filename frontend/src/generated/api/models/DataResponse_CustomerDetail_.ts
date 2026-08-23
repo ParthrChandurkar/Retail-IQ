@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { DeliveryRow } from "./DeliveryRow";
-export type DataResponse_list_DeliveryRow__ = {
+import type { CustomerDetail } from "./CustomerDetail";
+export type DataResponse_CustomerDetail_ = {
   generated_at?: string;
-  data: Array<DeliveryRow>;
+  data: CustomerDetail;
 };

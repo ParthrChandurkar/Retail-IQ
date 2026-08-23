@@ -5,11 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 export const formatCurrency = (value: number | string) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
     Number(value),
   );
 export const formatNumber = (value: number | string, digits = 0) =>
-  new Intl.NumberFormat("pt-BR", { maximumFractionDigits: digits }).format(
+  new Intl.NumberFormat("en-IN", { maximumFractionDigits: digits }).format(
     Number(value),
   );
 export const formatPercent = (value: number | string, digits = 1) =>

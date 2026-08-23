@@ -2,10 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CustomerRow } from "./CustomerRow";
-export type PageResponse_CustomerRow_ = {
+import type { CustomerProfile } from "./CustomerProfile";
+export type PageResponse_CustomerProfile_ = {
   generated_at?: string;
-  data: Array<CustomerRow>;
+  data: Array<CustomerProfile>;
   page: number;
   page_size: number;
   total: number;

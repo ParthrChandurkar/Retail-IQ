@@ -1,4 +1,5 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Crosshair, Gauge, Target } from "lucide-react";
 import { ClassificationService } from "../../../../src/generated/api";
@@ -9,58 +10,60 @@ import { KPIGrid, KPICard } from "../../../../components/kpi/KPI";
 import { PageHeader } from "../../../../components/layout/PageHeader";
 import { ErrorState } from "../../../../components/ui";
 import { formatPercent } from "../../../../lib/utils";
+
 export default function ClassificationPage() {
   const info = useQuery({
     queryKey: ["model-info"],
-    queryFn: async () =>
-      await ClassificationService.modelInfoApiV1ClassificationModelInfoGet(),
+    queryFn: () =>
+      ClassificationService.modelInfoApiV1ClassificationModelInfoGet(),
   });
   const metrics = useQuery({
     queryKey: ["model-metrics"],
-    queryFn: async () =>
-      await ClassificationService.modelMetricsApiV1ClassificationMetricsGet(),
+    queryFn: () =>
+      ClassificationService.modelMetricsApiV1ClassificationMetricsGet(),
   });
   const features = useQuery({
     queryKey: ["feature-importance"],
-    queryFn: async () =>
-      await ClassificationService.featureImportanceApiV1ClassificationFeatureImportanceGet(),
+    queryFn: () =>
+      ClassificationService.featureImportanceApiV1ClassificationFeatureImportanceGet(),
   });
-  const failed = [info, metrics, features].find((q) => q.error);
+  const failed = [info, metrics, features].find((query) => query.error);
   if (failed) return <ErrorState error={failed.error} />;
   if (!info.data || !metrics.data || !features.data) return null;
-  const m = metrics.data.data;
+  const model = info.data.data;
+  const metric = metrics.data.data;
   return (
     <>
       <PageHeader
         eyebrow="Model governance"
-        title="Satisfaction classification"
-        description={`${info.data.data.algorithm}, model ${info.data.data.model_id}. Positive-class metrics below refer specifically to low_satisfaction.`}
+        title="High-profit order classification"
+        description={`${model.algorithm}, model ${model.model_id}. Precision, recall, and F1 refer specifically to high_profit_order.`}
       />
       <KPIGrid>
         <KPICard
           label="Accuracy"
-          value={formatPercent(m.accuracy * 100, 2)}
+          value={formatPercent(metric.accuracy * 100, 2)}
           icon={Target}
         />
         <KPICard
-          label="Precision · low"
-          value={formatPercent(m.precision_low_satisfaction * 100, 2)}
+          label="Precision · high profit"
+          value={formatPercent(metric.precision_high_profit_order * 100, 2)}
           icon={Crosshair}
         />
         <KPICard
-          label="Recall · low"
-          value={formatPercent(m.recall_low_satisfaction * 100, 2)}
+          label="Recall · high profit"
+          value={formatPercent(metric.recall_high_profit_order * 100, 2)}
           icon={Activity}
         />
         <KPICard
-          label="F1 · low"
-          value={formatPercent(m.f1_low_satisfaction * 100, 2)}
-          detail={`ROC-AUC ${m.roc_auc.toFixed(4)}`}
+          label="F1 · high profit"
+          value={formatPercent(metric.f1_high_profit_order * 100, 2)}
+          detail={`ROC-AUC ${metric.roc_auc.toFixed(4)}`}
           icon={Gauge}
         />
       </KPIGrid>
       <div className="grid gap-4 xl:grid-cols-2">
-        <ConfusionMatrix matrix={m.confusion_matrix} />
+        <ConfusionMatrix matrix={metric.confusion_matrix} />
         <FeatureImportanceBar data={features.data.data} />
         <div className="xl:col-span-2">
           <PredictForm />

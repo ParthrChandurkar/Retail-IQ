@@ -1,59 +1,60 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
-import {
-  DashboardService,
-  ProductsService,
-  SellersService,
-} from "../../../../src/generated/api";
+import { ProductsService } from "../../../../src/generated/api";
 import {
   ChartCard,
   DataTable,
+  DiscountProfitChart,
   PerformanceBar,
 } from "../../../../components/charts/Charts";
 import { PageHeader } from "../../../../components/layout/PageHeader";
 import { ErrorState } from "../../../../components/ui";
 import {
   categoryFilters,
-  dateFilters,
-  sellerFilters,
+  discountFilters,
   useFilterStore,
 } from "../../../../lib/stores/filters";
-import { formatCurrency, formatNumber, titleCase } from "../../../../lib/utils";
+import {
+  formatCurrency,
+  formatNumber,
+  formatPercent,
+  titleCase,
+} from "../../../../lib/utils";
 
 export default function ProductsPage() {
-  const f = useFilterStore((s) => s.filters);
+  const filters = useFilterStore((state) => state.filters);
   const categories = useQuery({
-    queryKey: ["product-categories", categoryFilters(f)],
-    queryFn: async () =>
-      await ProductsService.productCategoriesApiV1ProductsCategoriesGet(
-        categoryFilters(f),
+    queryKey: ["product-categories", categoryFilters(filters)],
+    queryFn: () =>
+      ProductsService.productCategoriesApiV1ProductsCategoriesGet(
+        categoryFilters(filters),
       ),
   });
-  const products = useQuery({
-    queryKey: ["product-top", f.dateFrom, f.dateTo, f.category, f.sellerId],
-    queryFn: async () =>
-      await DashboardService.topProductsApiV1DashboardTopProductsGet({
-        ...dateFilters(f),
-        category: f.category,
-        sellerId: f.sellerId,
-        limit: 20,
-      }),
-  });
-  const sellers = useQuery({
-    queryKey: ["product-sellers", sellerFilters(f)],
-    queryFn: async () =>
-      await SellersService.sellerPerformanceApiV1SellersPerformanceGet(
-        sellerFilters(f),
+  const subCategories = useQuery({
+    queryKey: ["product-sub-categories", categoryFilters(filters)],
+    queryFn: () =>
+      ProductsService.productPerformanceApiV1ProductsPerformanceGet(
+        categoryFilters(filters),
       ),
   });
-  const failed = [categories, products, sellers].find((q) => q.error);
+  const discountProfit = useQuery({
+    queryKey: ["discount-profit", discountFilters(filters)],
+    queryFn: () =>
+      ProductsService.discountProfitApiV1ProductsDiscountProfitGet(
+        discountFilters(filters),
+      ),
+  });
+  const failed = [categories, subCategories, discountProfit].find(
+    (query) => query.error,
+  );
   if (failed) return <ErrorState error={failed.error} />;
   return (
     <>
       <PageHeader
         eyebrow="Merchandising intelligence"
-        title="Products & sellers"
-        description="Category, SKU, and seller performance based on delivered revenue, order count, units, and observed review scores."
+        title="Category & sub-category performance"
+        description="Product IDs do not repeat, so every product view stays at the meaningful category and sub-category grains."
       />
       <div className="grid gap-4 xl:grid-cols-2">
         {categories.data && (
@@ -62,32 +63,27 @@ export default function ProductsPage() {
             data={categories.data.data}
           />
         )}
-        <ChartCard title="Top products">
-          {products.data && (
+        {discountProfit.data && (
+          <DiscountProfitChart data={discountProfit.data.data} />
+        )}
+        <ChartCard className="xl:col-span-2" title="Sub-category profitability">
+          {subCategories.data && (
             <DataTable
-              headers={["Product", "Category", "Revenue", "Units", "Orders"]}
-              rows={products.data.data.map((r) => [
-                r.product_id.slice(0, 12),
-                titleCase(r.category ?? "uncategorized"),
-                formatCurrency(r.revenue),
-                r.units,
-                r.order_count,
-              ])}
-            />
-          )}
-        </ChartCard>
-        <ChartCard className="xl:col-span-2" title="Seller performance">
-          {sellers.data && (
-            <DataTable
-              headers={["Seller", "Revenue", "Orders", "Units", "Avg review"]}
-              rows={sellers.data.data.map((r) => [
-                r.key.slice(0, 12),
-                formatCurrency(r.revenue),
-                formatNumber(r.order_count),
-                formatNumber(r.units ?? 0),
-                r.average_review_score
-                  ? Number(r.average_review_score).toFixed(2)
-                  : "—",
+              headers={[
+                "Category / sub-category",
+                "Revenue",
+                "Profit",
+                "Margin",
+                "Average discount",
+                "Orders",
+              ]}
+              rows={subCategories.data.data.map((row) => [
+                titleCase(row.key),
+                formatCurrency(row.revenue),
+                formatCurrency(row.total_profit),
+                formatPercent(row.profit_margin_pct, 2),
+                formatPercent(row.avg_discount_pct, 2),
+                formatNumber(row.order_count),
               ])}
             />
           )}

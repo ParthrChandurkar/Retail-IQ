@@ -16,25 +16,27 @@ export class AnalyticsService {
   public static correlationMatrixApiV1AnalyticsCorrelationMatrixGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_dict_str__Any__> {
     return __request(OpenAPI, {
       method: "GET",
@@ -42,14 +44,15 @@ export class AnalyticsService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -64,25 +67,27 @@ export class AnalyticsService {
   public static hypothesisTestsApiV1AnalyticsHypothesisTestsGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_dict_str__Any___> {
     return __request(OpenAPI, {
       method: "GET",
@@ -90,14 +95,67 @@ export class AnalyticsService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
+      },
+      errors: {
+        422: `Validation Error`,
+      },
+    });
+  }
+  /**
+   * Broad Screen
+   * Expose the complete M3 categorical×numeric screen and field findings.
+   * @returns DataResponse_dict_str__Any__ Successful Response
+   * @throws ApiError
+   */
+  public static broadScreenApiV1AnalyticsBroadScreenGet({
+    dateFrom,
+    dateTo,
+    region,
+    state,
+    cityType,
+    category,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
+  }: {
+    dateFrom?: string | null;
+    dateTo?: string | null;
+    region?: string | null;
+    state?: string | null;
+    cityType?: string | null;
+    category?: string | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
+  }): CancelablePromise<DataResponse_dict_str__Any__> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/analytics/broad-screen",
+      query: {
+        date_from: dateFrom,
+        date_to: dateTo,
+        region: region,
+        state: state,
+        city_type: cityType,
+        category: category,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -112,25 +170,27 @@ export class AnalyticsService {
   public static descriptiveStatsApiV1AnalyticsDescriptiveStatsGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_dict_str__Any___> {
     return __request(OpenAPI, {
       method: "GET",
@@ -138,14 +198,15 @@ export class AnalyticsService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -160,25 +221,27 @@ export class AnalyticsService {
   public static seasonalityApiV1AnalyticsSeasonalityGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_dict_str__Any___> {
     return __request(OpenAPI, {
       method: "GET",
@@ -186,14 +249,15 @@ export class AnalyticsService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,

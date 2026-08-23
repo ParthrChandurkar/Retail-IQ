@@ -6,9 +6,12 @@ export type DashboardSummary = {
   period_start: string;
   period_end: string;
   total_revenue: string;
+  total_profit: string;
   total_orders: number;
   total_customers: number;
   average_order_value: string;
+  avg_discount_pct: string;
+  profit_margin_pct: string;
   revenue_mom_growth_pct: string | null;
   revenue_yoy_growth_pct: string | null;
 };

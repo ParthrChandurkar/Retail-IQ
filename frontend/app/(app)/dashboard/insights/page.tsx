@@ -1,63 +1,78 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
 import {
+  ProductsService,
   RecommendationsService,
-  ReviewsService,
 } from "../../../../src/generated/api";
-import { ReviewCharts } from "../../../../components/charts/Charts";
+import { ChartCard, DataTable } from "../../../../components/charts/Charts";
 import { PageHeader } from "../../../../components/layout/PageHeader";
 import { RecommendationList } from "../../../../components/recommendations/RecommendationList";
-import { Badge, ErrorState } from "../../../../components/ui";
-import { reviewFilters, useFilterStore } from "../../../../lib/stores/filters";
+import { ErrorState } from "../../../../components/ui";
+import {
+  discountFilters,
+  useFilterStore,
+} from "../../../../lib/stores/filters";
+import {
+  formatCurrency,
+  formatPercent,
+  titleCase,
+} from "../../../../lib/utils";
+
 export default function InsightsPage() {
-  const f = useFilterStore((s) => s.filters);
-  const p = reviewFilters(f);
-  const recs = useQuery({
+  const filters = useFilterStore((state) => state.filters);
+  const recommendations = useQuery({
     queryKey: ["recommendations"],
-    queryFn: async () =>
-      await RecommendationsService.recommendationsApiV1RecommendationsGet(),
+    queryFn: () =>
+      RecommendationsService.recommendationsApiV1RecommendationsGet(),
   });
-  const distribution = useQuery({
-    queryKey: ["review-distribution", p],
-    queryFn: async () =>
-      await ReviewsService.scoreDistributionApiV1ReviewsScoreDistributionGet(p),
+  const margin = useQuery({
+    queryKey: ["insight-discount-profit", discountFilters(filters)],
+    queryFn: () =>
+      ProductsService.discountProfitApiV1ProductsDiscountProfitGet(
+        discountFilters(filters),
+      ),
   });
-  const trends = useQuery({
-    queryKey: ["review-trends", p],
-    queryFn: async () =>
-      await ReviewsService.reviewTrendsApiV1ReviewsTrendsGet(p),
-  });
-  const failed = [recs, distribution, trends].find((q) => q.error);
+  const failed = [recommendations, margin].find((query) => query.error);
   if (failed) return <ErrorState error={failed.error} />;
   return (
     <>
       <PageHeader
         eyebrow="Decision support"
         title="Insights & recommendations"
-        description="Deterministic, auditable recommendations paired with governed review-score analytics."
-        action={<Badge>No NLP-dependent UI · gate was NO-GO</Badge>}
+        description="Deterministic recommendations paired with auditable discount and profitability evidence."
       />
       <section className="mb-8">
         <h2 className="mb-4 text-xl font-semibold">Recommended actions</h2>
-        {recs.data && <RecommendationList recommendations={recs.data.data} />}
+        {recommendations.data && (
+          <RecommendationList recommendations={recommendations.data.data} />
+        )}
       </section>
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold">Review analytics</h2>
-          <p className="mt-1 text-sm text-muted">
-            Score distribution and trends only. Sentiment, keywords, topics, and
-            word clouds are intentionally absent.
-          </p>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-2">
-          {distribution.data && trends.data && (
-            <ReviewCharts
-              distribution={distribution.data.data}
-              trends={trends.data.data}
-            />
-          )}
-        </div>
-      </section>
+      <ChartCard
+        title="Discount-margin evidence"
+        description="Canonical discount bands and their observed profitability support the recommendation rules."
+      >
+        {margin.data && (
+          <DataTable
+            headers={[
+              "Category",
+              "Sub-category",
+              "Discount band",
+              "Average discount",
+              "Profit margin",
+              "Profit",
+            ]}
+            rows={margin.data.data.map((row) => [
+              titleCase(row.category),
+              titleCase(row.sub_category),
+              titleCase(row.discount_band),
+              formatPercent(row.avg_discount_pct, 2),
+              formatPercent(row.avg_profit_margin_pct, 2),
+              formatCurrency(row.total_profit),
+            ])}
+          />
+        )}
+      </ChartCard>
     </>
   );
 }

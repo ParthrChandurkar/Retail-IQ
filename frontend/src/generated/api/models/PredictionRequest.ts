@@ -4,34 +4,23 @@
 /* eslint-disable */
 export type PredictionRequest = {
   /**
-   * Order or external audit identifier
+   * External order audit identifier
    */
   entity_id: string;
-  total_price: number;
-  total_freight: number;
-  item_count: number;
-  product_count: number;
-  seller_count: number;
-  average_item_price: number;
-  maximum_item_price: number;
-  freight_ratio?: number | null;
-  payment_value?: number | null;
-  payment_installments?: number | null;
-  delivery_days?: number | null;
-  delivery_delay_hours?: number | null;
-  is_late?: number | null;
-  approval_hours?: number | null;
-  carrier_handling_hours?: number | null;
-  estimated_delivery_days?: number | null;
-  shipping_limit_slack_days?: number | null;
-  seller_distance_km?: number | null;
-  average_product_weight_g?: number | null;
-  average_product_volume_cm3?: number | null;
-  customer_state: string;
-  seller_state: string;
-  dominant_category: string;
-  primary_payment_type: string;
-  purchase_month: number;
-  purchase_weekday: number;
-  purchase_hour: number;
+  /**
+   * Checkout sales value in INR
+   */
+  sales: number;
+  discount_pct: number;
+  category: string;
+  sub_category: string;
+  segment: "Consumer" | "Corporate";
+  city_type: "Tier 1" | "Tier 2" | "Village";
+  state: string;
+  /**
+   * Trusted state_region_reference-derived region
+   */
+  region: "North" | "South" | "East" | "West";
+  order_month: number;
+  order_dow: number;
 };

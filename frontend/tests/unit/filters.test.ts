@@ -8,30 +8,34 @@ import {
 describe("shared-filter mart routing", () => {
   beforeEach(() => useFilterStore.getState().reset());
 
-  it("uses the documented category-over-region-over-seller priority", () => {
+  it("uses the documented category-or-trusted-geography routing", () => {
     expect(revenueSource({})).toBe("daily mart");
-    expect(revenueSource({ sellerId: "s1" })).toBe("seller mart");
-    expect(revenueSource({ state: "SP", sellerId: "s1" })).toBe(
-      "regional mart",
+    expect(revenueSource({ state: "Maharashtra" })).toBe(
+      "trusted geography mart",
     );
-    expect(revenueSource({ category: "health", state: "SP" })).toBe(
-      "category mart",
+    expect(revenueSource({ category: "Electronics" })).toBe(
+      "category and sub-category mart",
     );
   });
 
   it("sends only the chosen mart's supported filter family", () => {
     expect(
       revenueFilters({
-        dateFrom: "2018-01-01",
-        category: "health",
-        state: "SP",
+        dateFrom: "2023-01-01",
+        category: "Electronics",
+        subCategory: "Phones",
+        state: "Maharashtra",
       }),
-    ).toEqual({ dateFrom: "2018-01-01", category: "health" });
+    ).toEqual({
+      dateFrom: "2023-01-01",
+      category: "Electronics",
+      subCategory: "Phones",
+    });
   });
 
   it("updates and removes filter state", () => {
-    useFilterStore.getState().set("category", "health");
-    expect(useFilterStore.getState().filters.category).toBe("health");
+    useFilterStore.getState().set("category", "Electronics");
+    expect(useFilterStore.getState().filters.category).toBe("Electronics");
     useFilterStore.getState().set("category", "");
     expect(useFilterStore.getState().filters.category).toBeUndefined();
   });

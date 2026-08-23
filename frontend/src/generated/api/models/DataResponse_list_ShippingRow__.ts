@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { PaymentRow } from "./PaymentRow";
-export type DataResponse_list_PaymentRow__ = {
+import type { ShippingRow } from "./ShippingRow";
+export type DataResponse_list_ShippingRow__ = {
   generated_at?: string;
-  data: Array<PaymentRow>;
+  data: Array<ShippingRow>;
 };

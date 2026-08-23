@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { RepeatPurchase } from "./RepeatPurchase";
-export type DataResponse_RepeatPurchase_ = {
+import type { DiscountProfitRow } from "./DiscountProfitRow";
+export type DataResponse_list_DiscountProfitRow__ = {
   generated_at?: string;
-  data: RepeatPurchase;
+  data: Array<DiscountProfitRow>;
 };

@@ -13,15 +13,19 @@ import {
   Pie,
   PieChart,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from "recharts";
 import type {
+  DiscountProfitRow,
   GlobalFeature,
   PerformanceRow,
+  RegionRow,
   RevenuePoint,
-  ReviewRow,
   SegmentRow,
 } from "../../src/generated/api";
 import { cn, formatCurrency, formatNumber, titleCase } from "../../lib/utils";
@@ -102,7 +106,7 @@ export function RevenueTrendChart({
   return (
     <ChartCard
       title="Revenue trend"
-      description="Delivered-order revenue by purchase date; route changes with category, geography, or seller filters."
+      description="Revenue and profit by order date; category and trusted-geography filters route to their governed marts."
       table={table}
     >
       <div className="h-72" role="img" aria-label="Revenue trend line chart">
@@ -174,6 +178,13 @@ export function PerformanceBar({
 }
 export function SegmentDonut({ data }: { data: SegmentRow[] }) {
   const colors = usePalette();
+  const totals = Array.from(
+    data.reduce((rows, row) => {
+      rows.set(row.segment, (rows.get(row.segment) ?? 0) + row.customer_count);
+      return rows;
+    }, new Map<string, number>()),
+    ([segment, customer_count]) => ({ segment, customer_count }),
+  );
   return (
     <ChartCard title="Customer segments">
       <div
@@ -184,14 +195,14 @@ export function SegmentDonut({ data }: { data: SegmentRow[] }) {
         <ResponsiveContainer>
           <PieChart>
             <Pie
-              data={data}
+              data={totals}
               dataKey="customer_count"
               nameKey="segment"
               innerRadius={60}
               outerRadius={95}
               paddingAngle={2}
             >
-              {data.map((row, index) => (
+              {totals.map((row, index) => (
                 <Cell key={row.segment} fill={colors[index % colors.length]} />
               ))}
             </Pie>
@@ -235,56 +246,90 @@ export function FeatureImportanceBar({ data }: { data: GlobalFeature[] }) {
     </ChartCard>
   );
 }
-export function ReviewCharts({
-  distribution,
-  trends,
-}: {
-  distribution: ReviewRow[];
-  trends: ReviewRow[];
-}) {
+export function CityTypeComparison({ data }: { data: RegionRow[] }) {
   const colors = usePalette();
+  const totals = Array.from(
+    data.reduce((rows, row) => {
+      if (!row.city_type) return rows;
+      rows.set(
+        row.city_type,
+        (rows.get(row.city_type) ?? 0) + Number(row.revenue),
+      );
+      return rows;
+    }, new Map<string, number>()),
+    ([city_type, revenue]) => ({ city_type, revenue }),
+  );
   return (
-    <>
-      <ChartCard title="Review score distribution">
-        <div className="h-72">
-          <ResponsiveContainer>
-            <BarChart data={distribution}>
-              <CartesianGrid stroke="var(--chart-grid)" />
-              <XAxis dataKey="key" tick={{ fill: "var(--text-secondary)" }} />
-              <YAxis tick={{ fill: "var(--text-secondary)" }} />
-              <Tooltip {...tooltip} />
-              <Bar
-                dataKey="review_count"
-                fill={colors[0]}
-                radius={[5, 5, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </ChartCard>
-      <ChartCard title="Review-score trend">
-        <div className="h-72">
-          <ResponsiveContainer>
-            <LineChart data={trends}>
-              <CartesianGrid stroke="var(--chart-grid)" />
-              <XAxis
-                dataKey="key"
-                tick={{ fill: "var(--text-secondary)", fontSize: 10 }}
-                minTickGap={20}
-              />
-              <YAxis domain={[1, 5]} tick={{ fill: "var(--text-secondary)" }} />
-              <Tooltip {...tooltip} />
-              <Line
-                dataKey="average_review_score"
-                stroke={colors[2]}
-                strokeWidth={2.5}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </ChartCard>
-    </>
+    <ChartCard
+      title="Revenue by city type"
+      description="Tier 1, Tier 2, and Village are compared as a first-class India-specific dimension."
+    >
+      <div
+        className="h-72"
+        role="img"
+        aria-label="Revenue by city type bar chart"
+      >
+        <ResponsiveContainer>
+          <BarChart data={totals}>
+            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+            <XAxis
+              dataKey="city_type"
+              tick={{ fill: "var(--text-secondary)" }}
+            />
+            <YAxis tick={{ fill: "var(--text-secondary)", fontSize: 10 }} />
+            <Tooltip
+              {...tooltip}
+              formatter={(value) => formatCurrency(Number(value))}
+            />
+            <Bar dataKey="revenue" fill={colors[2]} radius={[5, 5, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </ChartCard>
+  );
+}
+
+export function DiscountProfitChart({ data }: { data: DiscountProfitRow[] }) {
+  const colors = usePalette();
+  const points = data.map((row) => ({
+    ...row,
+    discount: Number(row.avg_discount_pct),
+    margin: Number(row.avg_profit_margin_pct),
+  }));
+  return (
+    <ChartCard
+      title="Discount vs profit margin"
+      description="Each point is a category, sub-category, and canonical discount-band aggregate."
+    >
+      <div
+        className="h-72"
+        role="img"
+        aria-label="Discount versus profit margin scatter chart"
+      >
+        <ResponsiveContainer>
+          <ScatterChart margin={{ bottom: 8, left: 8 }}>
+            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+            <XAxis
+              type="number"
+              dataKey="discount"
+              name="Average discount"
+              unit="%"
+              tick={{ fill: "var(--text-secondary)", fontSize: 10 }}
+            />
+            <YAxis
+              type="number"
+              dataKey="margin"
+              name="Profit margin"
+              unit="%"
+              tick={{ fill: "var(--text-secondary)", fontSize: 10 }}
+            />
+            <ZAxis range={[45, 45]} />
+            <Tooltip {...tooltip} cursor={{ strokeDasharray: "3 3" }} />
+            <Scatter data={points} fill={colors[1]} />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+    </ChartCard>
   );
 }
 export function DataTable({

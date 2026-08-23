@@ -8,12 +8,12 @@ export type ModelMetrics = {
   positive_class: string;
   negative_class: string;
   accuracy: number;
-  precision_low_satisfaction: number;
-  recall_low_satisfaction: number;
-  f1_low_satisfaction: number;
+  precision_high_profit_order: number;
+  recall_high_profit_order: number;
+  f1_high_profit_order: number;
   roc_auc: number;
   cv_f1_scores: Array<number>;
-  cv_mean_f1_low_satisfaction: number;
+  cv_mean_f1_high_profit_order: number;
   cv_roc_auc_scores: Array<number>;
   cv_mean_roc_auc: number;
   confusion_matrix: Record<string, any>;

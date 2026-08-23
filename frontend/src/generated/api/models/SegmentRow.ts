@@ -4,7 +4,10 @@
 /* eslint-disable */
 export type SegmentRow = {
   segment: string;
+  order_value_tier: string;
+  city_type: string;
   customer_count: number;
-  avg_clv: string;
-  avg_order_count: string;
+  avg_order_value: string;
+  avg_profit: string;
+  avg_discount_pct: string;
 };

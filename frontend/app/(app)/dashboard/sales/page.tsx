@@ -1,9 +1,10 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
 import {
   AnalyticsService,
   DashboardService,
-  PaymentsService,
+  ProductsService,
 } from "../../../../src/generated/api";
 import {
   ChartCard,
@@ -19,56 +20,54 @@ import {
   revenueFilters,
   useFilterStore,
 } from "../../../../lib/stores/filters";
-import { formatCurrency, formatNumber, titleCase } from "../../../../lib/utils";
+import {
+  formatCurrency,
+  formatNumber,
+  formatPercent,
+  titleCase,
+} from "../../../../lib/utils";
+
 export default function SalesPage() {
-  const f = useFilterStore((s) => s.filters);
+  const filters = useFilterStore((state) => state.filters);
   const trend = useQuery({
-    queryKey: ["sales-trend", revenueFilters(f)],
-    queryFn: async () =>
-      await DashboardService.revenueTrendApiV1DashboardRevenueTrendGet(
-        revenueFilters(f),
+    queryKey: ["sales-trend", revenueFilters(filters)],
+    queryFn: () =>
+      DashboardService.revenueTrendApiV1DashboardRevenueTrendGet(
+        revenueFilters(filters),
       ),
   });
   const categories = useQuery({
-    queryKey: ["sales-categories", categoryFilters(f)],
-    queryFn: async () =>
-      await DashboardService.topCategoriesApiV1DashboardTopCategoriesGet({
-        ...categoryFilters(f),
+    queryKey: ["sales-categories", categoryFilters(filters)],
+    queryFn: () =>
+      DashboardService.topCategoriesApiV1DashboardTopCategoriesGet({
+        ...categoryFilters(filters),
         limit: 15,
       }),
   });
-  const products = useQuery({
-    queryKey: ["sales-products", f.dateFrom, f.dateTo, f.category, f.sellerId],
-    queryFn: async () =>
-      await DashboardService.topProductsApiV1DashboardTopProductsGet({
-        ...dateFilters(f),
-        category: f.category,
-        sellerId: f.sellerId,
-        limit: 15,
-      }),
-  });
-  const season = useQuery({
-    queryKey: ["seasonality", dateFilters(f)],
-    queryFn: async () =>
-      await AnalyticsService.seasonalityApiV1AnalyticsSeasonalityGet(
-        dateFilters(f),
+  const subCategories = useQuery({
+    queryKey: ["sales-sub-categories", categoryFilters(filters)],
+    queryFn: () =>
+      ProductsService.productPerformanceApiV1ProductsPerformanceGet(
+        categoryFilters(filters),
       ),
   });
-  const payments = useQuery({
-    queryKey: ["payment-mix", dateFilters(f)],
-    queryFn: async () =>
-      await PaymentsService.methodMixApiV1PaymentsMethodMixGet(dateFilters(f)),
+  const seasonality = useQuery({
+    queryKey: ["seasonality", dateFilters(filters)],
+    queryFn: () =>
+      AnalyticsService.seasonalityApiV1AnalyticsSeasonalityGet(
+        dateFilters(filters),
+      ),
   });
-  const failed = [trend, categories, products, season, payments].find(
-    (q) => q.error,
+  const failed = [trend, categories, subCategories, seasonality].find(
+    (query) => query.error,
   );
   if (failed) return <ErrorState error={failed.error} />;
   return (
     <>
       <PageHeader
         eyebrow="Sales intelligence"
-        title="Revenue & demand"
-        description="Purchase-date trends, category and product performance, payment behavior, and seasonality from governed revenue definitions."
+        title="Revenue, profit & demand"
+        description="Order-date trends, category and sub-category performance, and five-year seasonality using the migrated metric dictionary."
       />
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="xl:col-span-2">
@@ -81,7 +80,7 @@ export default function SalesPage() {
           />
         )}
         <ChartCard title="Monthly seasonality">
-          {season.data && (
+          {seasonality.data && (
             <DataTable
               headers={[
                 "Month",
@@ -89,37 +88,31 @@ export default function SalesPage() {
                 "Total revenue",
                 "Orders",
               ]}
-              rows={season.data.data.map((r) => [
-                String(r.month_number),
-                formatCurrency(String(r.average_daily_revenue)),
-                formatCurrency(String(r.total_revenue)),
-                formatNumber(String(r.order_count)),
+              rows={seasonality.data.data.map((row) => [
+                String(row.month_number),
+                formatCurrency(String(row.average_daily_revenue)),
+                formatCurrency(String(row.total_revenue)),
+                formatNumber(String(row.order_count)),
               ])}
             />
           )}
         </ChartCard>
-        <ChartCard title="Product performance">
-          {products.data && (
+        <ChartCard className="xl:col-span-2" title="Sub-category performance">
+          {subCategories.data && (
             <DataTable
-              headers={["Product", "Category", "Revenue", "Orders"]}
-              rows={products.data.data.map((r) => [
-                r.product_id.slice(0, 12),
-                titleCase(r.category ?? "uncategorized"),
-                formatCurrency(r.revenue),
-                r.order_count,
-              ])}
-            />
-          )}
-        </ChartCard>
-        <ChartCard title="Payment method mix">
-          {payments.data && (
-            <DataTable
-              headers={["Method", "Payments", "Orders", "Value"]}
-              rows={payments.data.data.map((r) => [
-                titleCase(r.payment_type),
-                r.payment_count,
-                r.order_count,
-                formatCurrency(r.payment_value),
+              headers={[
+                "Category / sub-category",
+                "Revenue",
+                "Profit",
+                "Margin",
+                "Orders",
+              ]}
+              rows={subCategories.data.data.map((row) => [
+                titleCase(row.key),
+                formatCurrency(row.revenue),
+                formatCurrency(row.total_profit),
+                formatPercent(row.profit_margin_pct, 2),
+                formatNumber(row.order_count),
               ])}
             />
           )}

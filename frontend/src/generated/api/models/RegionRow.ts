@@ -4,10 +4,14 @@
 /* eslint-disable */
 export type RegionRow = {
   state: string;
-  city?: string | null;
+  region: string;
+  city_type?: string | null;
   revenue: string;
+  total_profit: string;
   order_count: number;
   customer_count: number;
-  latitude?: number | null;
-  longitude?: number | null;
+  avg_discount_pct: string;
+  profit_margin_pct: string;
+  latitude: number;
+  longitude: number;
 };

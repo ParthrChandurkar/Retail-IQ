@@ -12,7 +12,7 @@ const capabilities = [
   [
     BarChart3,
     "Business intelligence",
-    "Revenue, customer, product, seller, regional, payment, and delivery analysis from governed marts.",
+    "Revenue, profit, discount, customer-segment, category, and trusted regional analysis from governed marts.",
   ],
   [
     LineChart,
@@ -22,7 +22,7 @@ const capabilities = [
   [
     BrainCircuit,
     "Decision support",
-    "A registered satisfaction-risk classifier and deterministic recommendations support operational action.",
+    "A registered high-profit order classifier and deterministic recommendations support operational action.",
   ],
 ];
 export default function HomePage() {
@@ -81,11 +81,11 @@ export default function HomePage() {
           </div>
           <div className="space-y-3 p-5">
             {[
-              "9-source ingestion",
+              "Single-source ingestion",
               "Curated quality layer",
               "Pre-aggregated BI marts",
               "Analytics & statistics",
-              "Satisfaction-risk model",
+              "High-profit order model",
               "Decision dashboards",
             ].map((item, index) => (
               <div

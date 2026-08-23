@@ -2,39 +2,42 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { DataResponse_list_DiscountProfitRow__ } from "../models/DataResponse_list_DiscountProfitRow__";
 import type { DataResponse_list_PerformanceRow__ } from "../models/DataResponse_list_PerformanceRow__";
-import type { DataResponse_ProductDetail_ } from "../models/DataResponse_ProductDetail_";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
 export class ProductsService {
   /**
    * Product Performance
+   * Return category/sub-category performance; Product ID is not analytical.
    * @returns DataResponse_list_PerformanceRow__ Successful Response
    * @throws ApiError
    */
   public static productPerformanceApiV1ProductsPerformanceGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_PerformanceRow__> {
     return __request(OpenAPI, {
       method: "GET",
@@ -42,14 +45,15 @@ export class ProductsService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -64,25 +68,27 @@ export class ProductsService {
   public static productCategoriesApiV1ProductsCategoriesGet({
     dateFrom,
     dateTo,
+    region,
     state,
-    city,
+    cityType,
     category,
-    sellerId,
-    paymentType,
-    customerSegment,
-    reviewScoreMin,
-    reviewScoreMax,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
     dateFrom?: string | null;
     dateTo?: string | null;
+    region?: string | null;
     state?: string | null;
-    city?: string | null;
+    cityType?: string | null;
     category?: string | null;
-    sellerId?: string | null;
-    paymentType?: string | null;
-    customerSegment?: string | null;
-    reviewScoreMin?: number | null;
-    reviewScoreMax?: number | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
   }): CancelablePromise<DataResponse_list_PerformanceRow__> {
     return __request(OpenAPI, {
       method: "GET",
@@ -90,14 +96,15 @@ export class ProductsService {
       query: {
         date_from: dateFrom,
         date_to: dateTo,
+        region: region,
         state: state,
-        city: city,
+        city_type: cityType,
         category: category,
-        seller_id: sellerId,
-        payment_type: paymentType,
-        customer_segment: customerSegment,
-        review_score_min: reviewScoreMin,
-        review_score_max: reviewScoreMax,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
@@ -105,20 +112,50 @@ export class ProductsService {
     });
   }
   /**
-   * Product Detail
-   * @returns DataResponse_ProductDetail_ Successful Response
+   * Discount Profit
+   * @returns DataResponse_list_DiscountProfitRow__ Successful Response
    * @throws ApiError
    */
-  public static productDetailApiV1ProductsProductIdGet({
-    productId,
+  public static discountProfitApiV1ProductsDiscountProfitGet({
+    dateFrom,
+    dateTo,
+    region,
+    state,
+    cityType,
+    category,
+    subCategory,
+    segment,
+    shipMode,
+    orderValueTier,
+    discountBand,
   }: {
-    productId: string;
-  }): CancelablePromise<DataResponse_ProductDetail_> {
+    dateFrom?: string | null;
+    dateTo?: string | null;
+    region?: string | null;
+    state?: string | null;
+    cityType?: string | null;
+    category?: string | null;
+    subCategory?: string | null;
+    segment?: string | null;
+    shipMode?: string | null;
+    orderValueTier?: string | null;
+    discountBand?: string | null;
+  }): CancelablePromise<DataResponse_list_DiscountProfitRow__> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/v1/products/{product_id}",
-      path: {
-        product_id: productId,
+      url: "/api/v1/products/discount-profit",
+      query: {
+        date_from: dateFrom,
+        date_to: dateTo,
+        region: region,
+        state: state,
+        city_type: cityType,
+        category: category,
+        sub_category: subCategory,
+        segment: segment,
+        ship_mode: shipMode,
+        order_value_tier: orderValueTier,
+        discount_band: discountBand,
       },
       errors: {
         422: `Validation Error`,
