@@ -51,15 +51,18 @@ export default function AnalyticsPage() {
     queryKey: ["hypothesis-tests"],
     queryFn: () =>
       AnalyticsService.hypothesisTestsApiV1AnalyticsHypothesisTestsGet({}),
+    enabled: correlation.isSuccess,
   });
   const stats = useQuery({
     queryKey: ["descriptive-stats"],
     queryFn: () =>
       AnalyticsService.descriptiveStatsApiV1AnalyticsDescriptiveStatsGet({}),
+    enabled: tests.isSuccess,
   });
   const screen = useQuery({
     queryKey: ["broad-screen"],
     queryFn: () => AnalyticsService.broadScreenApiV1AnalyticsBroadScreenGet({}),
+    enabled: stats.isSuccess,
   });
   const failed = [correlation, tests, stats, screen].find(
     (query) => query.error,

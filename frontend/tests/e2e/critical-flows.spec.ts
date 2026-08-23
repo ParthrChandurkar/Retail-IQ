@@ -446,13 +446,14 @@ test("classification uses the exact M6 inputs and outcome confidence", async ({
 test("analytics distinguishes null and significant findings", async ({
   page,
 }) => {
+  test.setTimeout(180_000);
   await login(page);
   await navigate(page, "Analytics");
   await expect(
     page.getByRole("heading", {
       name: "One-way ANOVA: profit margin across city types",
     }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("0.5289 · Not significant")).toBeVisible();
   await expect(
     page.getByRole("heading", {
@@ -460,6 +461,11 @@ test("analytics distinguishes null and significant findings", async ({
     }),
   ).toBeVisible();
   await expect(page.getByText("< 0.0001 · Significant")).toBeVisible();
+  await expect(
+    page
+      .getByText("Valid Dimension No Material Numeric Effect", { exact: true })
+      .first(),
+  ).toBeVisible({ timeout: 120_000 });
 });
 
 test("every migrated dashboard route renders its live API-backed view", async ({
@@ -477,6 +483,20 @@ test("every migrated dashboard route renders its live API-backed view", async ({
     await expect(page.getByRole("heading", { name: heading })).toBeVisible({
       timeout: 30_000,
     });
+    if (path.endsWith("products"))
+      await expect(
+        page.getByRole("img", { name: "Category revenue bar chart" }),
+      ).toBeVisible({ timeout: 60_000 });
+    if (path.endsWith("regional"))
+      await expect(
+        page.getByRole("img", {
+          name: "Indian state revenue tile choropleth",
+        }),
+      ).toBeVisible({ timeout: 60_000 });
+    if (path.endsWith("insights"))
+      await expect(page.locator("details").first()).toBeVisible({
+        timeout: 60_000,
+      });
   }
 });
 
