@@ -356,6 +356,20 @@ async function mockApi(page: Page) {
           },
         ]),
       );
+    if (pathname === "/api/v1/admin/settings")
+      return json(route, envelope({ settings: { currency: "INR" } }));
+    if (pathname === "/api/v1/admin/data-refresh-status")
+      return json(
+        route,
+        envelope({
+          job_name: "etl",
+          started_at: generatedAt,
+          finished_at: generatedAt,
+          status: "success",
+          rows_affected: 100000,
+          error_message: null,
+        }),
+      );
     return json(route, envelope([]));
   });
 }
@@ -498,13 +512,14 @@ test("every migrated dashboard route renders its live API-backed view", async ({
 }) => {
   await login(page);
   const routes = [
-    ["/dashboard/products", "Category & sub-category performance"],
-    ["/dashboard/regional", "Trusted geography & shipping"],
-    ["/dashboard/insights", "Insights & recommendations"],
-    ["/settings", "Account & platform"],
+    ["Products", "/dashboard/products", "Category & sub-category performance"],
+    ["Regional", "/dashboard/regional", "Trusted geography & shipping"],
+    ["Insights", "/dashboard/insights", "Insights & recommendations"],
+    ["Settings", "/settings", "Account & platform"],
   ] as const;
-  for (const [path, heading] of routes) {
-    await page.goto(path);
+  for (const [navigationLabel, path, heading] of routes) {
+    await navigate(page, navigationLabel);
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
     await expect(page.getByRole("heading", { name: heading })).toBeVisible({
       timeout: 30_000,
     });

@@ -6,7 +6,7 @@
 
 - Source: https://github.com/datameet/maps/tree/b3fbbde595310b397a55d718e0958ce249a4fa1f/States
 - License: CC BY 4.0
-- Processing: cleaned and simplified to 8% with Mapshaper, retaining all 36
+- Processing: cleaned and simplified to 2% with Mapshaper, retaining all 36
   source features and the original `ST_NM` state-name attribute.
 
 The Regional Dashboard renders India's 28 states plus Delhi. The ten areas
