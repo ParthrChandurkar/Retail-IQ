@@ -30,7 +30,9 @@ describe("accessible UI primitives", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("service unavailable");
   });
 
-  it("uses Indian digit grouping for large rupee values", () => {
-    expect(formatCurrency(250844101.42)).toBe("₹25,08,44,101.42");
+  it("formats the exact governed KPI values with Indian digit grouping", () => {
+    expect(formatCurrency("2508441014.18")).toBe("₹2,50,84,41,014.18");
+    expect(formatCurrency("375530511.43")).toBe("₹37,55,30,511.43");
+    expect(formatCurrency("25084.41")).toBe("₹25,084.41");
   });
 });

@@ -65,11 +65,11 @@ async function mockApi(page: Page) {
         envelope({
           period_start: "2019-01-01",
           period_end: "2023-12-31",
-          total_revenue: "250844101.42",
-          total_profit: "37553051.14",
+          total_revenue: "2508441014.18",
+          total_profit: "375530511.43",
           total_orders: 100000,
           total_customers: 100000,
-          average_order_value: "2508.44",
+          average_order_value: "25084.41",
           avg_discount_pct: "25.13",
           profit_margin_pct: "14.97",
           revenue_mom_growth_pct: "1.23",
@@ -379,9 +379,7 @@ test("login, Indian currency, filter routing, restored focus, and navigation", a
   await login(page);
   await expect(
     page.getByText(
-      process.env.LIVE_E2E === "1"
-        ? "₹2,50,84,41,014.18"
-        : "₹25,08,44,101.42",
+      "₹2,50,84,41,014.18",
     ),
   ).toBeVisible();
 
