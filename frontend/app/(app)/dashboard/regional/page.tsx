@@ -56,8 +56,8 @@ export default function RegionalPage() {
       />
       <div className="grid gap-4">
         <ChartCard
-          title="State-centroid choropleth"
-          description="Filled state tiles use a continuous revenue scale; customer points are never plotted."
+          title="Indian state choropleth"
+          description="Geographic state boundaries use selectable revenue, profit, and order-count scales. States without transactions remain visible in neutral gray."
         >
           {choropleth.data && <StateChoropleth states={choropleth.data.data} />}
         </ChartCard>

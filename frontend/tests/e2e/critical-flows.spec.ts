@@ -41,6 +41,28 @@ const region = {
   latitude: 19.7515,
   longitude: 75.7139,
 };
+const choroplethRegions = [
+  ["Delhi", "North", 28.6139, 77.209],
+  ["Gujarat", "West", 22.2587, 71.1924],
+  ["Karnataka", "South", 15.3173, 75.7139],
+  ["Madhya Pradesh", "West", 22.9734, 78.6569],
+  ["Maharashtra", "West", 19.7515, 75.7139],
+  ["Punjab", "North", 31.1471, 75.3412],
+  ["Rajasthan", "North", 27.0238, 74.2179],
+  ["Tamil Nadu", "South", 11.1271, 78.6569],
+  ["Uttar Pradesh", "North", 26.8467, 80.9462],
+  ["West Bengal", "East", 22.9868, 87.855],
+].map(([state, mappedRegion, latitude, longitude], index) => ({
+  ...region,
+  state: String(state),
+  region: String(mappedRegion),
+  revenue: String(100_000_000 + index * 10_000_000),
+  total_profit: String(15_000_000 + index * 1_000_000),
+  order_count: 900 + index * 20,
+  customer_count: 900 + index * 20,
+  latitude: Number(latitude),
+  longitude: Number(longitude),
+}));
 
 async function mockApi(page: Page) {
   await page.route("**/api/v1/**", async (route) => {
@@ -149,11 +171,10 @@ async function mockApi(page: Page) {
       });
     if (pathname === "/api/v1/customers/order-value-distribution")
       return json(route, envelope([{ bucket: "q4", count: 25000 }]));
-    if (
-      pathname === "/api/v1/regions/sales" ||
-      pathname === "/api/v1/regions/choropleth"
-    )
+    if (pathname === "/api/v1/regions/sales")
       return json(route, envelope([region]));
+    if (pathname === "/api/v1/regions/choropleth")
+      return json(route, envelope(choroplethRegions));
     if (pathname === "/api/v1/regions/shipping-performance")
       return json(
         route,
@@ -394,6 +415,12 @@ test("login, Indian currency, filter routing, restored focus, and navigation", a
   await expect(page).toHaveURL(/category=Electronics/);
   await routedRevenue;
 
+  await navigate(page, "Regional");
+  await expect(
+    page.getByRole("img", {
+      name: "Geographic map of Indian states colored by revenue",
+    }),
+  ).toBeVisible({ timeout: 60_000 });
   await navigate(page, "Customers");
   await expect(
     page.getByText("Cross-sectional customer profiles"),
@@ -485,12 +512,33 @@ test("every migrated dashboard route renders its live API-backed view", async ({
       await expect(
         page.getByRole("img", { name: "Category revenue bar chart" }),
       ).toBeVisible({ timeout: 60_000 });
-    if (path.endsWith("regional"))
+    if (path.endsWith("regional")) {
       await expect(
         page.getByRole("img", {
-          name: "Indian state revenue tile choropleth",
+          name: "Geographic map of Indian states colored by revenue",
         }),
       ).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByText("10 states with data · 19 states without data")).toBeVisible();
+      const statePaths = page.locator(".leaflet-overlay-pane path");
+      await expect(statePaths).toHaveCount(29);
+      const fills = await statePaths.evaluateAll((paths) =>
+        paths.map((path) => path.getAttribute("fill")),
+      );
+      expect(fills.filter((fill) => fill === "#cbd0d6")).toHaveLength(19);
+      expect(fills.filter((fill) => fill !== "#cbd0d6")).toHaveLength(10);
+      await page.getByRole("button", { name: "Profit" }).click();
+      await expect(
+        page.getByRole("img", {
+          name: "Geographic map of Indian states colored by profit",
+        }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Order count" }).click();
+      await expect(
+        page.getByRole("img", {
+          name: "Geographic map of Indian states colored by order count",
+        }),
+      ).toBeVisible();
+    }
     if (path.endsWith("insights"))
       await expect(page.locator("details").first()).toBeVisible({
         timeout: 60_000,

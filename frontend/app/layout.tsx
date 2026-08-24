@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import "leaflet/dist/leaflet.css";
 import "./styles/globals.css";
 import { Providers } from "../components/providers/Providers";
 
