@@ -1,5 +1,8 @@
 # Target Variable Selection Report
 
+> **Superseded Olist-era record.** Retained for migration history only; the
+> active target decision is documented in `target_variable_selection_v2.md`.
+
 - **Generated at:** `2026-08-08T03:42:27.6703354Z`
 - **Code/commit reference:** `3f85f4ac7ca165b7aa81ce9fde1dd57269d886d3`
 - **Dataset row counts used:** orders=99,441; delivered orders=96,478; delivered orders with both delivery dates=96,470; customers with a delivered order=93,358; review-order links=99,224; delivered review-order links=96,361; delivered orders with at least one review=95,832; order items=112,650

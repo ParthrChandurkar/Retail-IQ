@@ -5,6 +5,29 @@ through the least-privilege `powerbi_reader` PostgreSQL login. No Microsoft,
 Power BI Service, Azure AD, or cloud credential is required for this local
 Desktop workflow.
 
+## 15–20 minute Desktop build
+
+There is no checked-in `.pbix`. This execution environment can access the
+repository and terminal but cannot control or verify the user's live Power BI
+Desktop session, and no `pbi-tools`, Tabular Editor, or XMLA endpoint is
+available. A renamed archive or other unverified binary would not be a valid
+deliverable. The shortest reproducible manual path is:
+
+1. **Connect (2–3 minutes):** use the settings below and import
+   `marts.revenue_daily`, `marts.revenue_by_category`,
+   `marts.revenue_by_region`, `marts.shipping_performance`,
+   `marts.customer_segments`, `marts.category_discount_profit`, and
+   `marts.kpi_snapshot`.
+2. **Model (3–4 minutes):** paste the `Date` expression from
+   `powerbi/RetailIQ-Measures.dax`, mark it as the date table, and create the
+   four single-direction relationships shown below.
+3. **Measures (3–4 minutes):** copy the complete DAX file into Power BI, one
+   measure at a time. No names or formulas need translating.
+4. **Visuals (5–7 minutes):** add Revenue/Profit/Profit Margin/AOV/Avg Discount
+   cards, a Date-axis revenue line, category bars, and the state map.
+5. **Reconcile (1 minute):** confirm the Revenue and Profit cards equal the
+   exact values in the reconciliation table below.
+
 ## Connection
 
 1. Set a strong, unique `POWERBI_READER_PASSWORD` in `backend/.env` before the
@@ -95,9 +118,9 @@ measures translate the migration metric dictionary directly:
 
 - Revenue = source `SUM(sales)`, materialized as
   `SUM(revenue_daily[revenue])`.
-- Total Profit = source `SUM(profit)`, materialized as
+- Profit = source `SUM(profit)`, materialized as
   `SUM(revenue_daily[total_profit])`.
-- Profit Margin = Total Profit ÷ Revenue.
+- Profit Margin = Profit ÷ Revenue.
 - AOV = Revenue ÷ distinct order count; one source row equals one order.
 - Average Discount = the order-count-weighted average of daily
   `avg_discount_pct`, exactly reproducing source `AVG(discount_pct)`.
@@ -105,6 +128,29 @@ measures translate the migration metric dictionary directly:
 Use INR formatting with the `en-IN` locale. Profit Margin and Average Discount
 are percentages. The library also provides separate category and regional
 measures so a page does not accidentally combine incompatible mart grains.
+
+Paste-ready core measures (identical to the library):
+
+```DAX
+Revenue = SUM ( revenue_daily[revenue] )
+
+Profit = SUM ( revenue_daily[total_profit] )
+
+Profit Margin = DIVIDE ( [Profit], [Revenue] )
+
+Total Orders = SUM ( revenue_daily[order_count] )
+
+AOV = DIVIDE ( [Revenue], [Total Orders] )
+
+Avg Discount =
+DIVIDE (
+    SUMX (
+        revenue_daily,
+        revenue_daily[avg_discount_pct] * revenue_daily[order_count]
+    ),
+    [Total Orders]
+)
+```
 
 ## Exact reconciliation
 

@@ -1,5 +1,9 @@
 # Model Comparison — Customer Satisfaction
 
+> **Superseded Olist-era record.** Retained for migration history only; the
+> active model predicts High-Profit Orders and is documented in
+> `model_comparison_v2.md`.
+
 - **Generated at:** `2026-08-11T18:07:06.865651Z`
 - **Dataset row counts used:** review-order links=96,361; train=77,069; test=19,292; unique orders=95,832
 - **Code/commit reference:** `23f76a939e5e2e603a17370762a4a09e0c2e05a1`

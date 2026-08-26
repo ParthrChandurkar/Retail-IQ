@@ -1,5 +1,8 @@
 # Customer Analytics Report
 
+> **Superseded Olist-era record.** Retained for migration history only; RFM and
+> CLV are not part of the active Indian Store Data product.
+
 - **Generated at:** `2026-08-06T04:51:08.329076+00:00`
 - **Code/commit reference:** `aa84a065ffa36b58a3f8f8b2b8523d7dad07a45c`
 - **Dataset row counts used:** orders=99,441, payments=103,886, order_items=112,650, customers=99,441, customer_profile=93,358, reviews=99,224

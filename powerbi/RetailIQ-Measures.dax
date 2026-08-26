@@ -12,19 +12,19 @@ CALENDAR (
 Revenue =
 SUM ( revenue_daily[revenue] )
 
-Total Profit =
+Profit =
 SUM ( revenue_daily[total_profit] )
 
-Profit Margin % =
-DIVIDE ( [Total Profit], [Revenue] )
+Profit Margin =
+DIVIDE ( [Profit], [Revenue] )
 
 Total Orders =
 SUM ( revenue_daily[order_count] )
 
-Average Order Value =
+AOV =
 DIVIDE ( [Revenue], [Total Orders] )
 
-Average Discount % =
+Avg Discount =
 DIVIDE (
     SUMX (
         revenue_daily,

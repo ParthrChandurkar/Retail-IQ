@@ -1,5 +1,8 @@
 # Mart Refactor Validation Report
 
+> **Superseded Olist-era record.** Retained for migration history only; it does
+> not describe the active Indian Store Data marts.
+
 - **Generated at:** `2026-08-09T17:34:00.9607600Z`
 - **Code/commit reference:** `4d6f96f4bfe5d1d61ad55459cf867992860c3392`
 - **Dataset row counts used:** orders=99,441; delivered orders=96,478; order items=112,650; payment details=103,886; delivered customers=93,358

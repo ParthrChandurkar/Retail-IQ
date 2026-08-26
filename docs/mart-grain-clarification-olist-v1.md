@@ -1,5 +1,8 @@
 # Phase 3 Mart Grain Clarification
 
+> **Superseded Olist-era record.** Retained for migration history only; it does
+> not describe the active Indian Store Data marts.
+
 - **Reviewed at:** `2026-08-08T03:42:27.6703354Z`
 - **Code/commit reference:** `3f85f4ac7ca165b7aa81ce9fde1dd57269d886d3`
 - **Authority:** Addendum v1.3 → v1.2 → v1.1 → SRS v1.0

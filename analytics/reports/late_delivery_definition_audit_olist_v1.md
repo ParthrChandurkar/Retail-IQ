@@ -1,5 +1,8 @@
 # Late-Delivery Definition Audit
 
+> **Superseded Olist-era record.** Retained for migration history only; Delayed
+> Shipment is retired from the active Indian Store Data product.
+
 - **Generated at:** `2026-08-09T17:34:00.9607600Z`
 - **Code/commit reference:** `4d6f96f4bfe5d1d61ad55459cf867992860c3392`
 - **Dataset row counts used:** orders=99,441; delivered orders=96,478; delivered orders with both delivery timestamps=96,470; reviewed delivered order-links with both delivery timestamps=96,353

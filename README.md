@@ -230,9 +230,17 @@ in a real Chromium browser.
 
 ![Executive dashboard with INR revenue and profit KPIs](docs/screenshots/executive-dashboard.png)
 
+### Sales performance
+
+![Five-year sales and profit dashboard](docs/screenshots/sales-dashboard.png)
+
 ### Cross-sectional customer analytics
 
 ![Customer segment, order-value tier, and city-type dashboard](docs/screenshots/customer-analytics.png)
+
+### Category and discount performance
+
+![Category, sub-category, and discount-profit dashboard](docs/screenshots/product-dashboard.png)
 
 ### Geographic performance
 
