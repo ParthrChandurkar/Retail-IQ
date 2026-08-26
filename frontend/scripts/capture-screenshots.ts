@@ -5,6 +5,7 @@ async function main() {
   const baseURL = process.env.SCREENSHOT_BASE_URL ?? "http://localhost:3000";
   const email = process.env.SCREENSHOT_ADMIN_EMAIL;
   const password = process.env.SCREENSHOT_ADMIN_PASSWORD;
+  const requestedName = process.env.SCREENSHOT_NAME;
   if (!email || !password) {
     throw new Error(
       "SCREENSHOT_ADMIN_EMAIL and SCREENSHOT_ADMIN_PASSWORD are required",
@@ -13,6 +14,7 @@ async function main() {
 
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
+    args: ["--disable-gpu", "--renderer-process-limit=2"],
   });
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
@@ -24,66 +26,86 @@ async function main() {
   await page.getByText("Business performance").waitFor({ timeout: 30_000 });
 
   const output = path.resolve(process.cwd(), "..", "docs", "screenshots");
-  for (const [name, route, heading, readyText] of [
+  for (const [name, route, heading, apiPaths] of [
     [
       "executive-dashboard.png",
       "/dashboard",
       "Business performance",
-      "Top products",
+      ["/api/v1/dashboard/summary"],
     ],
     [
       "sales-dashboard.png",
       "/dashboard/sales",
       "Revenue, profit & demand",
-      "Category performance",
+      ["/api/v1/dashboard/revenue-trend"],
     ],
     [
       "customer-analytics.png",
       "/dashboard/customers",
       "Cross-sectional customer profiles",
-      "Order-value distribution",
+      ["/api/v1/customers/segments"],
     ],
     [
       "product-dashboard.png",
       "/dashboard/products",
       "Category & sub-category performance",
-      "Sub-category profitability",
+      ["/api/v1/products/performance"],
     ],
     [
       "regional-dashboard.png",
       "/dashboard/regional",
       "Trusted geography & shipping",
-      "Indian state choropleth",
+      ["/api/v1/regions/choropleth"],
     ],
     [
       "classification-dashboard.png",
       "/dashboard/classification",
       "High-profit order classification",
-      "Global feature importance",
+      [
+        "/api/v1/classification/model-info",
+        "/api/v1/classification/metrics",
+        "/api/v1/classification/feature-importance",
+      ],
     ],
     [
       "analytics-dashboard.png",
       "/dashboard/analytics",
       "Evidence behind the decisions",
-      "Broad categorical-vs-numeric screen",
+      [
+        "/api/v1/analytics/correlation-matrix",
+        "/api/v1/analytics/hypothesis-tests",
+        "/api/v1/analytics/descriptive-stats",
+        "/api/v1/analytics/broad-screen",
+      ],
     ],
     [
       "insights-dashboard.png",
       "/dashboard/insights",
       "Insights & recommendations",
-      "Discount-margin evidence",
+      ["/api/v1/recommendations"],
     ],
   ] as const) {
+    if (requestedName && requestedName !== name) continue;
+    const liveData = Promise.all(
+      apiPaths.map((apiPath) =>
+        page.waitForResponse(
+          (response) => response.url().includes(apiPath) && response.ok(),
+          { timeout: 120_000 },
+        ),
+      ),
+    );
     await page.goto(`${baseURL}${route}`);
     await page
       .getByRole("heading", { name: heading, exact: true })
       .waitFor({ timeout: 30_000 });
-    await page
-      .getByText(readyText, { exact: true })
-      .waitFor({ timeout: 30_000 });
-    await page.waitForLoadState("networkidle");
+    await liveData;
     await page.waitForTimeout(1_000);
-    await page.screenshot({ path: path.join(output, name), fullPage: true });
+    await page.screenshot({
+      path: path.join(output, name),
+      fullPage: name !== "regional-dashboard.png",
+      animations: "disabled",
+      timeout: 120_000,
+    });
   }
   await browser.close();
 }
