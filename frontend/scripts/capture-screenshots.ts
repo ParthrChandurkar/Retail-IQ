@@ -32,30 +32,57 @@ async function main() {
       "Top products",
     ],
     [
+      "sales-dashboard.png",
+      "/dashboard/sales",
+      "Revenue, profit & demand",
+      "Category performance",
+    ],
+    [
       "customer-analytics.png",
       "/dashboard/customers",
-      "Segments, RFM & value",
-      "Profiled customers",
+      "Cross-sectional customer profiles",
+      "Order-value distribution",
+    ],
+    [
+      "product-dashboard.png",
+      "/dashboard/products",
+      "Category & sub-category performance",
+      "Sub-category profitability",
+    ],
+    [
+      "regional-dashboard.png",
+      "/dashboard/regional",
+      "Trusted geography & shipping",
+      "Indian state choropleth",
     ],
     [
       "classification-dashboard.png",
       "/dashboard/classification",
-      "Satisfaction classification",
-      "Single-record prediction",
+      "High-profit order classification",
+      "Global feature importance",
+    ],
+    [
+      "analytics-dashboard.png",
+      "/dashboard/analytics",
+      "Evidence behind the decisions",
+      "Broad categorical-vs-numeric screen",
     ],
     [
       "insights-dashboard.png",
       "/dashboard/insights",
       "Insights & recommendations",
-      "Review score distribution",
+      "Discount-margin evidence",
     ],
   ] as const) {
     await page.goto(`${baseURL}${route}`);
-    await page.getByText(heading, { exact: true }).waitFor({ timeout: 30_000 });
+    await page
+      .getByRole("heading", { name: heading, exact: true })
+      .waitFor({ timeout: 30_000 });
     await page
       .getByText(readyText, { exact: true })
       .waitFor({ timeout: 30_000 });
-    await page.waitForTimeout(750);
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1_000);
     await page.screenshot({ path: path.join(output, name), fullPage: true });
   }
   await browser.close();

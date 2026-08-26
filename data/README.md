@@ -66,6 +66,5 @@ documented setup sequence:
 
 8. Open <http://localhost:3000>.
 
-During migration M1, `make download-data` and `make etl` target Indian Store
-Data. Marts, analytics, ML, API, and frontend migration are gated to M2 and
-later phases.
+All ETL, marts, analytics, ML, API, frontend, and Power BI workflows now target
+this canonical Indian Store Data file. No legacy source file is read.

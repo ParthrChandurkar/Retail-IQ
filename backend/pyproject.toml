@@ -15,7 +15,6 @@ dependencies = [
     "fastapi>=0.110,<1",
     "kaggle>=1.6,<2",
     "joblib==1.4.2",
-    "langdetect>=1.0.9,<2",
     "ipykernel>=6.29,<7",
     "matplotlib>=3.9,<4",
     "nbclient>=0.10,<1",
@@ -75,7 +74,7 @@ strict = true
 packages = ["app"]
 
 [[tool.mypy.overrides]]
-module = ["asyncpg", "jose", "jose.*", "joblib", "kaggle.*", "langdetect", "matplotlib.*", "nbclient", "nbclient.*", "nbformat", "nbformat.*", "pandas.*", "scipy.*", "seaborn.*", "sklearn.*", "xgboost.*"]
+module = ["asyncpg", "jose", "jose.*", "joblib", "kaggle.*", "matplotlib.*", "nbclient", "nbclient.*", "nbformat", "nbformat.*", "pandas.*", "scipy.*", "seaborn.*", "sklearn.*", "xgboost.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

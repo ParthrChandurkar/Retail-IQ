@@ -1,135 +1,157 @@
 # Power BI Integration
 
-Retail IQ exposes its finalized PostgreSQL marts to Power BI through the
-least-privilege `powerbi_reader` login. The role can select from `marts` only;
-it cannot use `raw`, `curated`, or `ml`.
+Power BI Desktop connects directly to the finalized Indian Store Data marts
+through the least-privilege `powerbi_reader` PostgreSQL login. No Microsoft,
+Power BI Service, Azure AD, or cloud credential is required for this local
+Desktop workflow.
 
-## Prerequisites and connection
+## Connection
 
-1. Set a strong unique `POWERBI_READER_PASSWORD` in `backend/.env` before the
-   first `docker compose up -d`. Never commit that value.
-2. Complete the README setup through `make analytics-reports` so the marts are
-   populated.
-3. In Power BI Desktop choose **Get data → PostgreSQL database**.
-4. Enter:
+1. Set a strong, unique `POWERBI_READER_PASSWORD` in `backend/.env` before the
+   first migration run. Never commit the value.
+2. Complete the README setup through `make analytics-reports`.
+3. In Power BI Desktop, select **Get data → PostgreSQL database**.
+4. Use these values:
 
-| Setting | Local reference value |
+| Setting | Local value |
 |---|---|
 | Server | `localhost:5432` |
 | Database | `retail_bi` |
 | Data connectivity mode | `Import` |
 | Authentication | Database |
 | User name | `powerbi_reader` |
-| Password | the local `POWERBI_READER_PASSWORD` value |
+| Password | the value set in `backend/.env` |
 
-Import is recommended: the source is a bounded academic dataset, marts are
-pre-aggregated, and batch refresh controls freshness. Use DirectQuery only when
-a stakeholder explicitly needs on-demand database freshness and accepts its
-latency/availability trade-off. No Microsoft, Azure AD, or Power BI Service
-credential is needed for the local Desktop connection.
+Import mode is recommended because this is a bounded, batch-refreshed dataset
+and the marts are already pre-aggregated. DirectQuery is supported by the same
+database boundary, but adds avoidable latency and requires the local stack to
+remain online while a report is viewed.
 
-## Tables and final grains
+## Tables and grains
 
-Import these tables from the `marts` schema:
+Import only the tables needed by a report page.
 
-| Table | Final grain / key |
-|---|---|
-| `kpi_snapshot` | singleton (`snapshot_id = 1`) |
-| `revenue_daily` | `date` |
-| `revenue_by_category` | `date × category` |
-| `revenue_by_region` | `date × state × city` |
-| `seller_performance` | `date × seller_id` |
-| `payment_method_mix` | `date × payment_type` |
-| `customer_profile` | `customer_unique_id` |
-| `customer_segments` | `segment` |
-| `delivery_performance` | governed multi-filter delivery aggregate |
-| `review_summary` | governed multi-filter review aggregate |
-
-These are the post-refactor physical grains. Do not widen or join the five
-primary revenue facts to one another: that creates fact-to-fact multiplication.
-
-## Model relationships
-
-Create the `Date` table from the first expression in
-[`powerbi/RetailIQ-Measures.dax`](../powerbi/RetailIQ-Measures.dax), mark it as
-the date table, and add single-direction one-to-many relationships:
-
-| One side | Many side | Cardinality / direction |
+| Mart | Physical grain | Intended use |
 |---|---|---|
-| `Date[Date]` | `revenue_daily[date]` | 1:*; Date filters fact |
-| `Date[Date]` | `revenue_by_category[date]` | 1:*; Date filters fact |
-| `Date[Date]` | `revenue_by_region[date]` | 1:*; Date filters fact |
-| `Date[Date]` | `seller_performance[date]` | 1:*; Date filters fact |
-| `Date[Date]` | `payment_method_mix[date]` | 1:*; Date filters fact |
-| `customer_segments[segment]` | `customer_profile[rfm_segment]` | 1:*; segment filters profile |
+| `kpi_snapshot` | one all-period row | KPI reconciliation/reference |
+| `revenue_daily` | `date` | Revenue, profit, AOV, discount, trends |
+| `revenue_by_category` | `date × category × sub_category` | Category and sub-category analysis |
+| `revenue_by_region` | `date × state × region × city_type` | Geographic and city-type analysis |
+| `shipping_performance` | `date × ship_mode × region` | Descriptive shipping duration only |
+| `customer_profile` | `customer_id` | Cross-sectional order-value profiles |
+| `customer_segments` | `segment × order_value_tier × city_type` | Segment comparisons |
+| `category_discount_profit` | `category × sub_category × discount_band` | Discount-versus-profit analysis |
 
-Keep `kpi_snapshot` disconnected. `delivery_performance` and `review_summary`
-carry multiple dimension combinations and should initially remain standalone;
-use their own fields on their report pages. This avoids ambiguous filter paths.
+`region` in the marts is derived from `curated.state_region_reference`. The
+unreliable source-reported region is deliberately excluded from Power BI.
 
-## Governed DAX measures
+## Relationship model
+
+Create the `Date` table from
+[`RetailIQ-Measures.dax`](../powerbi/RetailIQ-Measures.dax), mark it as the date
+table, and use single-direction one-to-many date relationships:
+
+```mermaid
+erDiagram
+    DATE ||--o{ REVENUE_DAILY : filters
+    DATE ||--o{ REVENUE_BY_CATEGORY : filters
+    DATE ||--o{ REVENUE_BY_REGION : filters
+    DATE ||--o{ SHIPPING_PERFORMANCE : filters
+
+    DATE {
+      date Date PK
+    }
+    REVENUE_DAILY {
+      date date PK
+    }
+    REVENUE_BY_CATEGORY {
+      date date PK
+      string category PK
+      string sub_category PK
+    }
+    REVENUE_BY_REGION {
+      date date PK
+      string state PK
+      string region PK
+      string city_type PK
+    }
+    SHIPPING_PERFORMANCE {
+      date date PK
+      string ship_mode PK
+      string region PK
+    }
+```
+
+Keep `kpi_snapshot`, `customer_profile`, `customer_segments`, and
+`category_discount_profit` disconnected unless a report adds explicit dimension
+tables. Never relate aggregate marts directly to one another: fact-to-fact joins
+would multiply rows and corrupt totals.
+
+## Governed measures
 
 Copy the complete library from
-[`powerbi/RetailIQ-Measures.dax`](../powerbi/RetailIQ-Measures.dax). It directly
-implements Addendum §7:
+[`powerbi/RetailIQ-Measures.dax`](../powerbi/RetailIQ-Measures.dax). Its base
+measures translate the migration metric dictionary directly:
 
-- Revenue is the sum of delivered-order item price plus freight already stored
-  in `revenue_daily[revenue]`.
-- AOV is revenue divided by delivered-order count in the same context.
-- MoM and YoY compare calendar periods through the purchase-date axis.
-- CLV is historical `customer_profile[total_spend]`, labeled “Lifetime Value
-  (to date)” and never presented as a forecast.
-- Customer Count counts rows in the one-row-per-customer `customer_profile`, so
-  it is an exact distinct delivered-customer count and responds to customer
-  segment/geography filters. It deliberately returns blank under a Date filter
-  because summing daily distinct counts would double-count repeat customers. The
-  web API can compute date-filtered distinct customers from curated order
-  linkage, but the least-privilege Power BI role cannot access curated data. This
-  guard preserves the binding definition instead of displaying a fabricated
-  filtered number.
+- Revenue = source `SUM(sales)`, materialized as
+  `SUM(revenue_daily[revenue])`.
+- Total Profit = source `SUM(profit)`, materialized as
+  `SUM(revenue_daily[total_profit])`.
+- Profit Margin = Total Profit ÷ Revenue.
+- AOV = Revenue ÷ distinct order count; one source row equals one order.
+- Average Discount = the order-count-weighted average of daily
+  `avg_discount_pct`, exactly reproducing source `AVG(discount_pct)`.
 
-### Showing cleaning and preprocessing progress
+Use INR formatting with the `en-IN` locale. Profit Margin and Average Discount
+are percentages. The library also provides separate category and regional
+measures so a page does not accidentally combine incompatible mart grains.
 
-Add a **Data Quality & Pipeline** report page using the checked-in, generated
-[`pre-clean`](../analytics/reports/data_quality_report_pre_clean.md) and
-[`post-clean`](../analytics/reports/data_quality_report_post_clean.md) reports as
-the governed evidence source. Show the raw/curated row-count reconciliation,
-invalid-row handling, geolocation enrichment gaps, duplicate-review consistency,
-and retained outlier flags. These results are generated from the dataset during
-`make etl`; do not type substitute values or infer missing demographics. Power BI
-reads only marts by design, so the quality evidence remains a documented refresh
-snapshot rather than granting the BI login access to raw/curated records.
+## Exact reconciliation
 
-Format Revenue, AOV, and CLV as BRL; format growth as Percentage.
+The final M9 verification compares the same populated database used by the web
+dashboard with the Power BI DAX sources:
 
-## Reconciliation evidence
-
-The Phase 9 spot-check used the populated database and the unfiltered live
-dashboard:
-
-| KPI | Web dashboard / `kpi_snapshot` | DAX source calculation | Result |
+| KPI | Live dashboard / `kpi_snapshot` | Power BI source calculation | Result |
 |---|---:|---:|---|
-| Revenue | R$ 15,419,773.75 | `SUM(revenue_daily[revenue])` = R$ 15,419,773.75 | exact |
-| AOV | R$ 159.826838761… | Revenue ÷ 96,478 delivered orders = R$ 159.826838761… | exact |
+| Revenue | **₹2,50,84,41,014.18** | `SUM(revenue_daily[revenue])` = **₹2,50,84,41,014.18** | Exact |
+| Profit | **₹37,55,30,511.43** | `SUM(revenue_daily[total_profit])` = **₹37,55,30,511.43** | Exact |
 
-The UI rounds AOV to R$ 159.83. Re-run these SQL checks after a refresh:
+Re-run the proof after any data refresh:
 
 ```sql
-SELECT total_revenue, total_orders, average_order_value
-FROM marts.kpi_snapshot WHERE snapshot_id = 1;
+SELECT total_revenue, total_profit
+FROM marts.kpi_snapshot
+WHERE snapshot_id = 1;
 
-SELECT SUM(revenue), SUM(order_count), SUM(revenue) / SUM(order_count)
+SELECT SUM(revenue) AS revenue, SUM(total_profit) AS profit
 FROM marts.revenue_daily;
 ```
 
-## Refresh and report construction
+The two rows must match to the rupee (and currently match to the paise). A
+different result is a model/filtering error and must not be hidden by rounding.
 
-After `make etl && make analytics-reports`, choose **Refresh** in Power BI
-Desktop. Recommended pages are Executive KPIs, Revenue & Categories, Regional,
-Sellers & Payments, and Customer Value. Use only the matching fact table on
-each page and the shared Date dimension.
+## Data quality and preprocessing page
 
-Power BI Desktop is installed software, but a valid `.pbix`/`.pbit` requires GUI
-authoring and is not safely generated as a text artifact. This repository does
-not include a fake template. The tested database access, final-grain model,
-relationships, and DAX library are the reproducible integration deliverable.
+To show migration work in the Power BI report, add a **Data Quality & Pipeline**
+page using these generated evidence artifacts:
+
+- [`data_quality_report_pre_clean.md`](../analytics/reports/data_quality_report_pre_clean.md)
+- [`data_quality_report_post_clean.md`](../analytics/reports/data_quality_report_post_clean.md)
+- [`eda_report.md`](../analytics/reports/eda_report.md)
+- [`statistical_analysis_report.md`](../analytics/reports/statistical_analysis_report.md)
+- [`model_comparison_v2.md`](../analytics/reports/model_comparison_v2.md)
+
+Show the 100,000 raw-to-curated row reconciliation, discount normalization,
+retained profit-outlier count, unreliable source-region finding, engineered
+profit margin/discount bands, and model evaluation. These are generated
+evidence, not editable substitutes for database facts. `powerbi_reader` remains
+marts-only; access is not widened merely to visualize pipeline provenance.
+
+## Refresh and access boundary
+
+Run `make etl`, `make analytics-reports`, and `make train` before selecting
+**Refresh** in Power BI Desktop. The role may `SELECT` from `marts` and cannot
+use or read `raw`, `curated`, or `ml`. The repository intentionally provides a
+reproducible relationship guide and DAX library rather than a fabricated binary
+`.pbix`; authoring or publishing a Power BI report remains a local Desktop/UI
+operation and requires no credential to be shared with Codex.

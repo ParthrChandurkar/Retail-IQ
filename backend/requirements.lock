@@ -120,8 +120,6 @@ kagglesdk==0.1.36
     # via kaggle
 kiwisolver==1.5.0
     # via matplotlib
-langdetect==1.0.9
-    # via retail-bi-backend (pyproject.toml)
 librt==0.13.0
     # via mypy
 mako==1.4.1
@@ -267,7 +265,6 @@ seaborn==0.13.2
 six==1.17.0
     # via
     #   ecdsa
-    #   langdetect
     #   python-dateutil
 sqlalchemy==2.0.51
     # via

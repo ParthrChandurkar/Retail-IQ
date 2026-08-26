@@ -1,5 +1,7 @@
-// Retail IQ — Addendum §7 metric dictionary
-// Mark the Date table below as the model's date table.
+// Retail IQ — Indian Store Data metric dictionary (Migration Addendum v2.0 §4)
+// marts.revenue_daily[revenue] is the governed daily SUM(curated.orders.sales).
+// Mark the Date table as the model's date table and relate Date[Date] 1:* to
+// each date-grained mart using single-direction filtering.
 
 Date =
 CALENDAR (
@@ -10,70 +12,54 @@ CALENDAR (
 Revenue =
 SUM ( revenue_daily[revenue] )
 
-Delivered Orders =
+Total Profit =
+SUM ( revenue_daily[total_profit] )
+
+Profit Margin % =
+DIVIDE ( [Total Profit], [Revenue] )
+
+Total Orders =
 SUM ( revenue_daily[order_count] )
 
 Average Order Value =
-DIVIDE ( [Revenue], [Delivered Orders] )
+DIVIDE ( [Revenue], [Total Orders] )
+
+Average Discount % =
+DIVIDE (
+    SUMX (
+        revenue_daily,
+        revenue_daily[avg_discount_pct] * revenue_daily[order_count]
+    ),
+    [Total Orders]
+)
 
 Customer Count =
-IF (
-    ISFILTERED ( 'Date'[Date] ),
-    BLANK (),
-    COUNTROWS ( customer_profile )
-)
+SUM ( revenue_daily[customer_count] )
+
+// Use Customer Count only where the date context cannot double-count a
+// customer. The migrated source has one order per customer, but this note keeps
+// the measure honest if a future refresh introduces repeat customers.
 
 Previous Month Revenue =
-VAR LatestVisibleDate = MAX ( 'Date'[Date] )
-VAR CurrentMonthStart = DATE ( YEAR ( LatestVisibleDate ), MONTH ( LatestVisibleDate ), 1 )
-VAR PreviousMonthStart = EDATE ( CurrentMonthStart, -1 )
-VAR PreviousMonthEnd = EOMONTH ( PreviousMonthStart, 0 )
-RETURN
-    CALCULATE (
-        [Revenue],
-        REMOVEFILTERS ( 'Date' ),
-        DATESBETWEEN ( 'Date'[Date], PreviousMonthStart, PreviousMonthEnd )
-    )
-
-Current Month Revenue =
-VAR LatestVisibleDate = MAX ( 'Date'[Date] )
-VAR CurrentMonthStart = DATE ( YEAR ( LatestVisibleDate ), MONTH ( LatestVisibleDate ), 1 )
-RETURN
-    CALCULATE (
-        [Revenue],
-        REMOVEFILTERS ( 'Date' ),
-        DATESBETWEEN ( 'Date'[Date], CurrentMonthStart, EOMONTH ( LatestVisibleDate, 0 ) )
-    )
+CALCULATE ( [Revenue], DATEADD ( 'Date'[Date], -1, MONTH ) )
 
 Revenue MoM Growth % =
-DIVIDE (
-    [Current Month Revenue] - [Previous Month Revenue],
-    [Previous Month Revenue]
-)
+DIVIDE ( [Revenue] - [Previous Month Revenue], [Previous Month Revenue] )
 
-Prior Year Revenue =
-VAR LatestVisibleDate = MAX ( 'Date'[Date] )
-VAR PriorYearMonthStart =
-    DATE ( YEAR ( LatestVisibleDate ) - 1, MONTH ( LatestVisibleDate ), 1 )
-RETURN
-    CALCULATE (
-        [Revenue],
-        REMOVEFILTERS ( 'Date' ),
-        DATESBETWEEN (
-            'Date'[Date],
-            PriorYearMonthStart,
-            EOMONTH ( PriorYearMonthStart, 0 )
-        )
-    )
+Previous Year Revenue =
+CALCULATE ( [Revenue], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )
 
 Revenue YoY Growth % =
-DIVIDE (
-    [Current Month Revenue] - [Prior Year Revenue],
-    [Prior Year Revenue]
-)
+DIVIDE ( [Revenue] - [Previous Year Revenue], [Previous Year Revenue] )
 
-Lifetime Value (to date) =
-SUM ( customer_profile[total_spend] )
+Category Revenue =
+SUM ( revenue_by_category[revenue] )
 
-Average Lifetime Value (to date) =
-AVERAGE ( customer_profile[total_spend] )
+Category Profit =
+SUM ( revenue_by_category[total_profit] )
+
+Regional Revenue =
+SUM ( revenue_by_region[revenue] )
+
+Regional Profit =
+SUM ( revenue_by_region[total_profit] )
