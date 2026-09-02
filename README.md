@@ -1,4 +1,4 @@
-# Retail IQ — Retail Business Intelligence Platform
+# 🛍️ Retail IQ — Indian Retail Business Intelligence Platform
 
 [![CI](https://github.com/ParthrChandurkar/Retail-IQ/actions/workflows/ci.yml/badge.svg)](https://github.com/ParthrChandurkar/Retail-IQ/actions/workflows/ci.yml)
 ![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
@@ -6,299 +6,419 @@
 ![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
 ![Power BI](https://img.shields.io/badge/Power%20BI-Ready-F2C811?logo=powerbi&logoColor=111827)
 
-**From one 100,000-row retail source to governed Indian-market KPIs,
-statistical evidence, interactive dashboards, and explainable profit insight.**
+> From one Indian retail transaction dataset to clean data, governed KPIs,
+> statistical evidence, interactive dashboards, recommendations, and an
+> explainable High-Profit Order prediction model.
 
-## 2. 🎯 Problem Statement
+## 📌 Project at a Glance
 
-Retail reporting often becomes a collection of inconsistent totals and charts
-that overstate what a dataset can support. Retail IQ turns transaction data into
-one governed analytics system: reproducible cleaning, shared metric definitions,
-statistical tests, filter-safe marts, business recommendations, and a narrowly
-scoped classifier. Analytics remains the primary product; machine learning is a
-supporting decision tool.
+| Item | Details |
+|---|---|
+| **Project type** | Final-year B.Tech Data Science & Analytics project |
+| **Focus** | Business Intelligence first; ML supports decisions |
+| **Dataset** | Indian Store Data — 100,000 retail transactions |
+| **Time range** | 1 January 2019 to 31 December 2023 |
+| **Web stack** | Next.js + FastAPI + PostgreSQL + Docker |
+| **Prediction task** | High-Profit Order Classification |
+| **Active model** | Gradient Boosting |
+| **BI delivery** | Web dashboards and Power BI from the same marts |
 
-## 3. 🗂️ Dataset
+### 🗣️ Explain the project in one minute
 
-Retail IQ uses the
-[Indian Store Data dataset](https://www.kaggle.com/datasets/abuhumzakhan/store-data):
-**100,000 rows**, **25 source columns**, **100,000 distinct orders**, and a
-five-year `order_date` range from **2019-01-01 through 2023-12-31**. It contains
-customer segment/city type/state, product category/sub-category, transaction
-sales/discount/profit, quantity, and shipping dates.
+Retail IQ is an analytics-first retail intelligence platform. It takes a
+100,000-row Indian Store Data CSV, cleans and validates it, builds
+dashboard-ready PostgreSQL marts, produces EDA and statistical evidence, and
+trains a leakage-safe model that identifies likely high-profit orders. The same
+governed data marts feed the Next.js dashboard and Power BI, so KPI numbers
+remain consistent across both.
 
-Raw CSV data is not committed. Follow [`data/README.md`](data/README.md) and use
-the canonical local filename `data/raw/indian_store_data.csv`.
+## 💼 Business Problem
 
-This dataset supersedes Retail IQ's earlier Brazilian Olist version. That
-migration history is intentionally visible: the system was reworked when the
-faculty-mandated source changed, rather than relabeling old analysis as new.
-Empirical verification also found one order per Customer ID and Product ID,
-making cross-sectional and category-level analytics honest choices.
+Retail reports often contain disconnected charts, inconsistent totals, and
+claims that the data cannot support. Retail IQ establishes one repeatable,
+auditable decision-support workflow:
 
-## 4. 🏗️ Architecture
+~~~text
+Dataset understanding → cleaning → integration → EDA → statistics
+→ feature engineering → target selection → ML → dashboards → recommendations
+~~~
+
+Analytics is the main product. Machine learning is included only for a business
+problem the data can genuinely support.
+
+## 🇮🇳 Indian Dataset
+
+Retail IQ uses the [Indian Store Data dataset](https://www.kaggle.com/datasets/abuhumzakhan/store-data).
+
+| Verified source fact | Value |
+|---|---:|
+| Data rows | 100,000 |
+| Source columns | 25 |
+| Distinct Order IDs | 100,000 |
+| Distinct Customer IDs | 100,000 |
+| Distinct Product IDs | 100,000 |
+| Order-date range | 2019-01-01 → 2023-12-31 |
+| Canonical local file | data/raw/indian_store_data.csv |
+
+### 🔎 Important findings that shape the project
+
+- Each customer and product appears once. Therefore RFM, repeat-customer
+  prediction, customer lifetime value, and individual-product repeat-sales
+  claims would be misleading.
+- Customer analytics is deliberately cross-sectional: Segment × Order Value Tier
+  × City Type.
+- Product analytics is deliberately Category/Sub-Category based.
+- The raw Region field is not trustworthy geography. Retail IQ retains it for
+  audit only and uses a trusted state-to-region reference for maps and regional
+  reporting.
+- Legitimate extreme values are flagged rather than silently removed.
+
+This Indian source supersedes the earlier Brazilian Olist implementation. Olist
+reports are preserved only as clearly labelled historical records; no active
+dashboard, API, model, or mart uses them.
+
+## 🏗️ System Architecture
 
 ![Retail IQ end-to-end architecture](docs/architecture.svg)
 
-| Stage | Responsibility |
+~~~text
+Indian Store CSV
+      ↓
+Raw ingestion + pre-clean quality report
+      ↓
+Cleaning, validation, trusted geography, feature engineering
+      ↓
+Curated retail entities + audit logs
+      ↓
+Dashboard marts + EDA/statistics + ML registry
+      ↓
+FastAPI: auth, validation, routing, inference
+      ↓                         ↓
+Next.js dashboards         Power BI Desktop
+~~~
+
+Read [docs/architecture.md](docs/architecture.md) for the entity model, mart
+grains, trust boundaries, and deployment design.
+
+## ✨ What the Platform Delivers
+
+### 📊 Dashboards
+
+- **Executive Dashboard** — Revenue, Profit, Orders, Customers, AOV, Average
+  Discount, trend, and category performance.
+- **Sales Dashboard** — five-year revenue, profit, and demand trends.
+- **Customer Dashboard** — Segment × Order Value Tier × City Type comparisons.
+- **Product Dashboard** — Category/Sub-Category performance and
+  Discount-versus-Profit analysis.
+- **Regional Dashboard** — trusted Indian state choropleth, regional revenue,
+  city-type comparison, and descriptive shipping performance.
+- **Analytics Dashboard** — correlation, descriptive statistics, broad
+  categorical screening, Chi-Square, ANOVA, T-Test, and seasonality.
+- **Classification Dashboard** — model metrics, confusion matrix, feature
+  importance, and single-order prediction.
+- **Insights Dashboard** — deterministic recommendations backed by live marts.
+
+### 📐 Governed analytics
+
+- One metric dictionary for **Revenue**, **Profit**, **Profit Margin**, **AOV**,
+  **Average Discount**, orders, and customers.
+- Idempotent CSV ingestion with pre-clean and post-clean quality reports.
+- Eight pre-aggregated PostgreSQL marts for fast, filter-safe dashboards.
+- EDA, covariance/correlation, Chi-Square, ANOVA, T-Test, and five-year
+  seasonality with plain-language conclusions.
+- Honest findings: City Type does **not** materially explain profit margin
+  (p=0.5289), while discount level has a significant relationship with margin.
+
+### 🔐 Production-quality foundations
+
+- JWT access tokens in memory and secure rotating refresh cookies.
+- Validated request bodies, parameterized SQL, protected APIs, and Alembic
+  migrations.
+- The Power BI reader can query only dashboard marts, never raw, curated, or ML
+  schemas.
+- CI covers linting, typing, tests, accessibility, E2E flows, and Docker builds.
+
+## 🤖 ML Decision
+
+The target was selected only after data verification, EDA, statistics, and
+feature engineering.
+
+| Candidate | Score | Decision |
+|---|---:|---|
+| **High-Profit Order Classification** | **24/25** | ✅ Selected |
+| Customer Segment Classification | 17/25 | Not selected |
+| High-Discount / Margin-Erosion Classification | 16/25 | Not selected |
+
+### Selected target
+
+| Item | Definition |
 |---|---|
-| **📥 Ingest** | Load the single CSV idempotently and generate pre-clean evidence. |
-| **🧹 Govern** | Normalize/validate into customers, products, orders, and trusted geography. |
-| **📊 Analyze** | Build eight marts, EDA/statistics, segments, and deterministic recommendations. |
-| **🧠 Model** | Compare five algorithms for the evidence-selected High-Profit Order target. |
-| **🚀 Deliver** | Serve typed Next.js dashboards and read-only Power BI from the same metrics. |
+| Positive label | high_profit_order |
+| Negative label | standard_profit_order |
+| Threshold | Profit ≥ ₹5,363.845, the fixed P75 threshold |
+| Class balance | 25,000 high-profit / 75,000 standard-profit orders |
+| Prediction point | Checkout |
+| Validation | Stratified 80/20 order-level split, random seed 42 |
+| Winning model | Gradient Boosting |
+| Positive-class F1 | 0.709218 |
+| ROC-AUC | 0.923453 |
 
-PostgreSQL separates source landing (`raw`), cleaned entities (`curated`),
-dashboard aggregates (`marts`), and model governance (`ml`). FastAPI owns auth,
-validation, mart routing, analytics, and inference; the browser consumes its
-generated OpenAPI contract. See [`docs/architecture.md`](docs/architecture.md)
-for the current ER diagram, grains, trust boundaries, and production path.
+The model uses ten checkout-safe inputs: Sales, Discount %, Category,
+Sub-Category, Segment, City Type, State, trusted Region, Order Month, and
+Order Day of Week. Profit, margin, future shipping fields, IDs, names, and
+decorative source fields are excluded to prevent leakage.
 
-## 5. 🧰 Tech Stack
+The checked project database contains the active model as model_id 4. A fresh
+local database assigns its own numeric ID when the same governed training job
+registers the model; use the active-model API result rather than assuming a
+specific ID after a clean setup.
 
-| Layer | Technology |
+Full evidence:
+[target selection](analytics/reports/target_variable_selection_v2.md) ·
+[model comparison](analytics/reports/model_comparison_v2.md)
+
+## 🧰 Technology Stack
+
+| Layer | Tools |
 |---|---|
-| Frontend | Next.js 14, React 18, strict TypeScript, Tailwind CSS, React Query, Zustand, Recharts, React Leaflet, Framer Motion |
-| Backend | Python 3.11, FastAPI, Pydantic 2, SQLAlchemy 2, asyncpg, Alembic |
-| Analytics | pandas, SciPy, scikit-learn, Matplotlib, Seaborn, Jupyter |
-| ML | Logistic Regression, Decision Tree, Random Forest, Gradient Boosting, XGBoost, joblib registry |
-| Data | PostgreSQL 15 with `raw`, `curated`, `marts`, and `ml` schemas |
-| BI | Power BI Desktop via a marts-only database role and governed DAX |
-| Quality | pytest, Ruff, mypy, Vitest/RTL, Playwright, axe-core, GitHub Actions |
-| Runtime | Docker Compose and GNU Make |
+| Frontend | Next.js 14, React 18, TypeScript, Tailwind, React Query, Recharts, React Leaflet |
+| Backend | Python 3.11, FastAPI, Pydantic, SQLAlchemy, asyncpg |
+| Database | PostgreSQL 15 and Alembic |
+| Analytics | pandas, SciPy, Matplotlib, Seaborn, Jupyter |
+| ML | scikit-learn, XGBoost, joblib |
+| Quality | pytest, Ruff, mypy, Vitest, RTL, Playwright, axe-core |
+| Delivery | Docker Compose and GitHub Actions |
+| BI | Power BI Desktop and governed DAX |
 
-## 6. 🚀 Installation
+## 📁 Repository Guide
 
-Prerequisites: Git, Docker Desktop with its Linux engine running, GNU Make, and
-either Kaggle API credentials or a manually downloaded CSV. Node.js 20+ is only
-needed for development/tests outside Docker. Power BI Desktop is optional for
-the web app and required only to author/view a local Power BI report.
+This is the map to use when explaining the project to another person.
 
-1. Clone the repository.
-
-   ```bash
-   git clone https://github.com/ParthrChandurkar/Retail-IQ.git
-   cd Retail-IQ
-   ```
-
-2. Create local environment files.
-
-   ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
-   ```
-
-   PowerShell equivalents:
-
-   ```powershell
-   Copy-Item backend/.env.example backend/.env
-   Copy-Item frontend/.env.example frontend/.env
-   ```
-
-   In `backend/.env`, replace `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-   and `POWERBI_READER_PASSWORD` with real local values. Use a valid email and
-   strong unique secrets. Do not commit either `.env` file.
-
-3. Acquire the dataset using exactly one option.
-
-   - **Manual:** download the
-     [Kaggle dataset](https://www.kaggle.com/datasets/abuhumzakhan/store-data),
-     extract `store_sales_data (2).csv`, rename it to
-     `indian_store_data.csv`, and place it in `data/raw/`.
-   - **Automated:** export `KAGGLE_USERNAME` and `KAGGLE_KEY`, then run:
-
-     ```bash
-     make download-data
-     ```
-
-   The final payload must be `data/raw/indian_store_data.csv` (100,000 data
-   rows; SHA-256 `df1dd4a0d6bd486d34499e87b249e875f2a03bc407f5ffdddddf34bea80e727e`).
-
-4. Start PostgreSQL, FastAPI, and Next.js. Startup applies migrations and
-   bootstraps the administrator from the environment.
-
-   ```bash
-   docker compose up -d
-   ```
-
-5. Ingest and clean the source.
-
-   ```bash
-   make etl
-   ```
-
-6. Build marts and regenerate EDA/statistical reports.
-
-   ```bash
-   make analytics-reports
-   ```
-
-7. Train, compare, select, and register the classifier.
-
-   ```bash
-   make train
-   ```
-
-8. Open <http://localhost:3000>, sign in with the configured administrator,
-   and check API health at <http://localhost:8000/health>.
-
-The batch workflow can take several minutes. `docker compose ps` shows service
-health; `make down` stops the stack. There are no additional undocumented setup
-steps.
-
-## 7. 🧭 Usage
-
-- Sign in at <http://localhost:3000/login>. The access token stays in memory;
-  the rotating refresh token uses an httpOnly, Secure, SameSite=Strict cookie.
-- Explore Executive, Sales, Customers, Products, Regional, Classification,
-  Analytics, Insights, and Settings pages from the sidebar.
-- Use shared date, state, city-type, category, sub-category, and segment filters;
-  supported combinations are enforced by the API's mart-routing contract.
-- The Regional page combines a real Indian-state choropleth with city-type
-  comparison. States outside the 10 represented in the source remain neutral.
-- The Classification form uses the live 10-feature schema. Output is framed as
-  confidence in the returned `high_profit_order` or `standard_profit_order`
-  label, never as a fixed positive-class probability.
-- Swagger/OpenAPI is at <http://localhost:8000/docs>.
-- Power BI setup, model relationships, DAX, and exact KPI reconciliation are in
-  [`docs/powerbi-integration.md`](docs/powerbi-integration.md).
-- Run `make test` for the local backend/frontend quality suite.
-
-## 8. 📁 Folder Structure
-
-```text
+~~~text
 Retail-IQ/
-├── frontend/               # Next.js UI, generated API client, tests
-├── backend/
-│   ├── app/                # API, ETL, analytics, auth, ML
-│   ├── alembic/            # versioned PostgreSQL migrations
-│   ├── ml/registry/        # generated joblib artifact (ignored)
-│   └── tests/
+├── frontend/                       Next.js dashboard application
+│   ├── app/                        Login and all dashboard pages
+│   ├── components/                 Reusable charts, filters, map, KPI, UI, prediction form
+│   ├── lib/                        API runtime, formatters, client filter state
+│   ├── src/generated/api/          Typed OpenAPI client generated from FastAPI
+│   ├── tests/                      Unit/component and Playwright E2E tests
+│   └── public/maps/                Indian-state GeoJSON for the choropleth
+├── backend/                        FastAPI, data engineering, analytics, and ML
+│   ├── app/main.py                 API application entry point
+│   ├── app/routers/                Auth, dashboard, customer, product, region, analytics,
+│   │                               classification, recommendation, and admin endpoints
+│   ├── app/etl/                    Download, ingestion, cleaning, quality, feature, mart jobs
+│   ├── app/services/               KPI, routing, statistics, recommendation, inference logic
+│   ├── app/ml/                     Feature building, training, evaluation, explainability, registry
+│   ├── app/models/                 SQLAlchemy database models
+│   ├── app/schemas/                Request/response validation contracts
+│   ├── alembic/                    Versioned PostgreSQL migrations
+│   ├── tests/                      Backend, API, statistics, ML, and security tests
+│   └── .env.example                Required backend settings and safe placeholders
 ├── analytics/
-│   ├── notebooks/          # executable EDA/statistics artifacts
-│   └── reports/            # quality, target-selection, model reports
-├── data/raw/               # indian_store_data.csv (ignored)
-├── docs/                   # SRS chain, architecture, routing, QA, screenshots
-├── powerbi/                # governed DAX measure library
-├── .github/workflows/ci.yml
-├── docker-compose.yml
-└── Makefile
-```
+│   ├── notebooks/                  Executable EDA and statistics notebooks
+│   └── reports/                    Quality, EDA, statistics, target-selection, and ML reports
+├── data/
+│   ├── raw/                        Ignored source location: indian_store_data.csv
+│   └── README.md                   Acquisition, filename, checksum, and ETL instructions
+├── docs/
+│   ├── architecture.md             Data model, mart grains, security, deployment
+│   ├── powerbi-integration.md      Power BI connection, relationships, DAX, reconciliation
+│   ├── mart-routing.md             Which mart serves which filter combination
+│   ├── qa-checklist.md             Test, security, performance, and clean-run proof
+│   ├── screenshots/                Real rendered dashboard screenshots
+│   └── SRS*.md                     Governing SRS and migration addenda
+├── powerbi/
+│   ├── RetailIQ-Measures.dax       Copy-paste-ready governed DAX measure library
+│   └── README.md                   Power BI asset guide
+├── docker-compose.yml              Starts PostgreSQL, FastAPI, and Next.js
+├── Makefile                        Download, ETL, reports, training, and test commands
+└── .github/workflows/ci.yml        Backend, frontend, and Docker CI checks
+~~~
 
-## 9. ✨ Features
+## 🚀 Run Locally
 
-- [x] Single-file idempotent ingestion with generated pre/post-clean quality
-  reports, normalization counts, anomaly disclosure, and retained outlier flags.
-- [x] One governed INR metric dictionary for Revenue, Profit, Profit Margin,
-  AOV, Average Discount, and customer/order counts.
-- [x] Executive, sales, category/sub-category, cross-sectional customer,
-  geographic/city-type, analytics, classification, recommendations, and admin
-  APIs backed by pre-aggregated marts.
-- [x] Responsive light/dark SaaS UI with server-side filters, Indian number
-  grouping, accessible tables/charts, keyboard navigation, and a geographic
-  React Leaflet choropleth.
-- [x] EDA, broad categorical/numeric screening, correlation/covariance,
-  Chi-Square, ANOVA, and T-Test results with plain-language conclusions.
-- [x] Honest null-result presentation: city type does not explain profit margin
-  (`p=0.5289`), and ship mode does not explain shipping duration
-  (`p=0.349304`).
-- [x] Category/sub-category and discount-versus-profit analysis; customer
-  segment × order-value-tier × city-type comparisons.
-- [x] Evidence-scored target selection, leakage exclusions, reproducible
-  stratified validation, five-model comparison, labeled confusion matrix,
-  global feature importance, registered artifact, and live inference.
-- [x] JWT login/rotation, administrator bootstrap, protected APIs, validated
-  inputs, and marts-only Power BI access.
-- [x] Deterministic business recommendations backed by current mart data.
-- [x] Power BI relationship guide, governed DAX library, data-quality page
-  guidance, and Revenue/Profit parity proof.
-- [x] CI-enforced lint, format, type-check, unit/integration/e2e, accessibility,
-  production build, and Docker-image verification.
+### 1. Prerequisites
 
-The migration deliberately removed transaction concepts absent from the new
-source: payment-method, marketplace-seller, customer-review, and NLP analysis.
-It also retired RFM, lifetime-value terminology, Repeat Customer Prediction,
-and Delayed Shipment Classification because unique entity IDs and the measured
-shipping signal cannot support those claims.
+- Git
+- Docker Desktop with its Linux engine running
+- 8 GB available RAM recommended for Docker and ML training
+- GNU Make, **or** the Windows PowerShell commands shown below
+- Kaggle credentials only for automated dataset download
+- Power BI Desktop only for creating/viewing a Power BI report
 
-## 10. 🖼️ Screenshots
+### 2. Clone and configure
 
-The images below are captured from the populated Indian Store Data application
-in a real Chromium browser.
+~~~bash
+git clone https://github.com/ParthrChandurkar/Retail-IQ.git
+cd Retail-IQ
+~~~
 
-### Executive performance
+~~~powershell
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
+~~~
 
-![Executive dashboard with INR revenue and profit KPIs](docs/screenshots/executive-dashboard.png)
+Set strong local values in backend/.env:
 
-### Sales performance
+~~~dotenv
+JWT_SECRET=replace-with-a-long-random-secret
+ADMIN_EMAIL=your-valid-email@example.com
+ADMIN_PASSWORD=replace-with-a-strong-password
+POWERBI_READER_PASSWORD=replace-with-a-separate-strong-password
+~~~
 
-![Five-year sales and profit dashboard](docs/screenshots/sales-dashboard.png)
+Never commit .env files or passwords.
 
-### Cross-sectional customer analytics
+### 3. Add the Indian dataset
 
-![Customer segment, order-value tier, and city-type dashboard](docs/screenshots/customer-analytics.png)
+Choose **one** path.
 
-### Category and discount performance
+**Manual path**
 
-![Category, sub-category, and discount-profit dashboard](docs/screenshots/product-dashboard.png)
+1. Download [Indian Store Data](https://www.kaggle.com/datasets/abuhumzakhan/store-data).
+2. Extract store_sales_data (2).csv.
+3. Rename it to indian_store_data.csv.
+4. Place it at data/raw/indian_store_data.csv.
 
-### Geographic performance
+**Automated Kaggle path**
 
-![Indian state choropleth and city-type comparison](docs/screenshots/regional-dashboard.png)
+~~~powershell
+$env:KAGGLE_USERNAME = "your-kaggle-username"
+$env:KAGGLE_KEY = "your-kaggle-api-key"
+make download-data
+~~~
 
-### High-Profit Order classification
+The expected file has 100,000 data rows and SHA-256:
 
-![Classification metrics, importance, and prediction form](docs/screenshots/classification-dashboard.png)
+~~~text
+df1dd4a0d6bd486d34499e87b249e875f2a03bc407f5ffdddddf34bea80e727e
+~~~
 
-### Statistical evidence
+See [data/README.md](data/README.md) for the canonical acquisition details.
 
-![Analytics dashboard with significant and null findings](docs/screenshots/analytics-dashboard.png)
+### 4. Start services
 
-### Recommendations
+~~~bash
+docker compose up -d
+docker compose ps
+~~~
 
-![Insights and deterministic recommendations dashboard](docs/screenshots/insights-dashboard.png)
+| Service | Address |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend health | http://localhost:8000/health |
+| API documentation | http://localhost:8000/docs |
+| PostgreSQL | localhost:5432 |
 
-## 11. 🧪 Target Variable Selection Summary
+### 5. Build the complete data product
 
-Retail IQ selected its migrated label only after data verification, EDA,
-statistics, and feature engineering:
+**GNU Make**
 
-| Candidate | Availability | Balance | Business value | Feature support | Feasibility | Total |
-|---|---:|---:|---:|---:|---:|---:|
-| **High-Profit Order** | 5 | 4 | 5 | 5 | 5 | **24/25** |
-| Margin Erosion | 5 | 3 | 5 | 1 | 2 | 16/25 |
-| Customer Segment | 5 | 5 | 1 | 1 | 5 | 17/25 |
+~~~bash
+make etl
+make analytics-reports
+make train
+~~~
 
-The selected positive class is `high_profit_order`, defined as
-`profit >= ₹5,363.845` (the fixed profit P75), with 25,000 positive and 75,000
-standard-profit rows. Realized profit/margin and all post-checkout fields are
-excluded. The 10 permitted inputs are sales, discount, category, sub-category,
-segment, city type, trusted state/region, order month, and day of week.
+**Windows PowerShell when GNU Make is unavailable**
 
-Gradient Boosting won by positive-class F1 (0.709218; ROC-AUC 0.923453) on the
-fixed seed-42 stratified 80/20 split and is the sole active migrated model
-(`model_id=4`). Read the full
-[`target_variable_selection_v2.md`](analytics/reports/target_variable_selection_v2.md)
-and [`model_comparison_v2.md`](analytics/reports/model_comparison_v2.md).
+~~~powershell
+$commit = git rev-parse HEAD
+docker compose run --rm backend alembic upgrade head
+docker compose run --rm -e GIT_COMMIT=$commit backend python -m app.etl.run_all
+docker compose run --rm backend python -m app.etl.build_marts
+docker compose run --rm -e GIT_COMMIT=$commit backend python -m app.analytics.generate_reports
+docker compose run --rm -e GIT_COMMIT=$commit backend python -m app.ml.train
+~~~
 
-## 12. 🔭 Future Scope
+The first run creates the database, processes 100,000 rows, generates reports,
+builds marts, and compares five ML algorithms, so it can take several minutes.
 
-- Multi-tenant organizations and database row-level security.
-- Scheduled orchestration or CDC/stream ingestion instead of local batch jobs.
-- Managed cloud PostgreSQL, container hosting, secrets manager, TLS, CDN,
-  central observability, backups, and private networking.
-- SHAP local explanations; the implemented model exposes governed global
-  importance without fabricated local attributions.
-- Author/publish a branded `.pbix` or `.pbit` through Power BI Desktop/Service;
-  no unverifiable binary or Microsoft credential is committed.
-- Revisit behavioral customer/product analytics only if a future source has
-  genuine repeating entity IDs.
-- Preserve the retired Brazilian implementation in Git history as an example of
-  a governed production dataset migration.
+### 6. Sign in and stop
 
-## 13. 🎓 License / Academic Note
+Open http://localhost:3000/login and use the ADMIN_EMAIL and ADMIN_PASSWORD
+configured in backend/.env. The first backend startup creates that administrator.
 
-Retail IQ is a final-year B.Tech Data Science & Analytics project built with
-production-quality engineering standards. The Kaggle dataset is governed by its
-source terms and is not redistributed here. Unless a separate repository
-license is added, source availability does not grant additional reuse rights.
+~~~bash
+docker compose down
+~~~
+
+Use docker compose down -v only when you intentionally want to delete the local
+PostgreSQL data volume and rebuild from scratch.
+
+## 🧭 Use the Application
+
+1. Start with **Overview** to tell the executive KPI story.
+2. Use shared filters: date, state, city type, category, sub-category, and
+   segment.
+3. Use **Products** for category and discount-pressure analysis.
+4. Use **Regional** for trusted state geography and city-type comparison.
+5. Use **Analytics** to support claims with formal statistical evidence.
+6. Use **Classification** to demonstrate live High-Profit Order prediction.
+7. Use **Insights** to turn mart data into practical recommendations.
+
+## 📊 Power BI
+
+Power BI reads the same governed marts as the web dashboard, so the principal
+KPIs reconcile exactly:
+
+| KPI | Verified value |
+|---|---:|
+| Revenue | **₹2,50,84,41,014.18** |
+| Profit | **₹37,55,30,511.43** |
+
+Follow [docs/powerbi-integration.md](docs/powerbi-integration.md) for:
+
+- PostgreSQL connection settings using the marts-only powerbi_reader account
+- final mart relationships and grains
+- governed DAX in [RetailIQ-Measures.dax](powerbi/RetailIQ-Measures.dax)
+- visual/page suggestions and reconciliation proof
+
+Power BI Desktop is optional for the web project; it is required only to author
+or open a local PBIX report.
+
+## 🧪 Reports and Screenshots
+
+| Evidence | Why it matters |
+|---|---|
+| [M1 dataset verification](docs/m1-dataset-verification.md) | Proves source grain, dates, nulls, and field semantics |
+| [Pre-clean report](analytics/reports/data_quality_report_pre_clean.md) | Records source quality before transformation |
+| [Post-clean report](analytics/reports/data_quality_report_post_clean.md) | Explains corrections, flags, and data anomalies |
+| [EDA report](analytics/reports/eda_report.md) | Univariate, bivariate, multivariate, and trend findings |
+| [Statistics report](analytics/reports/statistical_analysis_report.md) | Test statistics, p-values, effects, and conclusions |
+| [Target selection](analytics/reports/target_variable_selection_v2.md) | Explains why High-Profit Order won |
+| [Model comparison](analytics/reports/model_comparison_v2.md) | Compares five algorithms and documents the winner |
+| [QA checklist](docs/qa-checklist.md) | Final API, security, accessibility, performance, and clean-run evidence |
+
+| Executive overview | Regional intelligence |
+|---|---|
+| ![Executive dashboard](docs/screenshots/executive-dashboard.png) | ![Regional dashboard](docs/screenshots/regional-dashboard.png) |
+
+| Classification | Statistical analysis |
+|---|---|
+| ![Classification dashboard](docs/screenshots/classification-dashboard.png) | ![Analytics dashboard](docs/screenshots/analytics-dashboard.png) |
+
+More real dashboard images are available in [docs/screenshots](docs/screenshots).
+
+## 🎓 Academic Note and Future Scope
+
+Retail IQ is a final-year B.Tech Data Science & Analytics project developed
+with production-quality engineering standards. The Kaggle dataset is governed by
+its source terms and is intentionally not redistributed in this repository.
+
+Future directions:
+
+- scheduled or streaming ingestion and managed cloud deployment;
+- multi-tenant organizations and database row-level security;
+- managed secrets, TLS, observability, backups, and private networking;
+- optional local SHAP explanations;
+- branded PBIX authoring/publishing;
+- behavioural customer/product analytics when a future source contains genuine
+  repeating entities.
+
+---
+
+⭐ If this project helps you, star the repository. For a project presentation,
+explain the architecture and reports first, then show the ML model as the final
+decision-support feature.
